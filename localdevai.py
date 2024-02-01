@@ -315,6 +315,7 @@ def main():
     global already_written
     download_on = False
     task_list_json = {}
+    start_programming = False
     
     st.set_page_config(
         page_title="Local devai",
@@ -348,6 +349,8 @@ def main():
         if st.button("Plan Tasks", key="plan_button"):
             with st.spinner("Planning the actions..."):
                 task_list_json = plan(user_input, download_on)
+                start_programming = True
+                
         on = st.toggle('Check if output files can be downloaded')
         if on:
             if not download_on:
@@ -356,60 +359,61 @@ def main():
                 st.write("You can download the logfiles")
                 check_download(download_on)
     
-    task_list = TaskList()
-    for task_info in task_list_json:
-        task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
-        task_list.add_task(task)
-
-    task_progress = []
+    while not start_programming:
+        task_list = TaskList()
+        for task_info in task_list_json:
+            task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
+            task_list.add_task(task)
     
-    for task in task_list.tasks:
-        st.subheader(f"Task: {task.description}")
-
-        with st.expander("Task Executor", expanded=True):
-            agent = TaskExecutor()
-            with st.spinner("Executing task..."):
-                execution_result = agent.execute_task(task, task_list, history)
-
-        with st.expander("Task Reviewer", expanded=True):
-            reviewer = TaskReviewer()
-            with st.spinner("Reviewing task output..."):
-                review_result = reviewer.review_task(execution_result, task)
-            satisfied = check_if_satisfied(review_result)
-
-            if not satisfied:
-                st.warning("Task needs adjustment based on review feedback.")
-                agent = TaskImprover()
-                improve_container = st.container(border=True)
-                review_container = st.container(border=True)
-                with st.spinner("Improving task based on feedback..."):
-                    improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
-                    
-                with st.spinner("Reviewing adjusted output..."):
-                    review_container.write(review_result = reviewer.review_task(execution_result, task))
-                satisfied = check_if_satisfied(review_result)
-
-            st.success("Task execution is satisfactory based on review.")
-            write_to_file("execution_output.txt", execution_result)
-            already_written = True
-
-        task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
-
-    st.success("Task plan generated successfully!")
-    download_on = True
+        task_progress = []
         
-    agent_output = read_from_file("execution_output.txt")
-    st.write(agent_output)
-    st.success("Final output has been written to a file called execution_output.txt")
+        for task in task_list.tasks:
+            st.subheader(f"Task: {task.description}")
     
-    already_written = False
-    with st.expander("Finalizer", expanded=True):
-        with st.spinner("Finalizing the endresult..."):
-            finalizer = Finalizer()
-            final_output = finalizer.compile_final_output("execution_output.txt")
-            write_to_file("final_output.txt", final_output)
-
-    st.success("Final output has been written to a file called final_output.txt")
+            with st.expander("Task Executor", expanded=True):
+                agent = TaskExecutor()
+                with st.spinner("Executing task..."):
+                    execution_result = agent.execute_task(task, task_list, history)
+    
+            with st.expander("Task Reviewer", expanded=True):
+                reviewer = TaskReviewer()
+                with st.spinner("Reviewing task output..."):
+                    review_result = reviewer.review_task(execution_result, task)
+                satisfied = check_if_satisfied(review_result)
+    
+                if not satisfied:
+                    st.warning("Task needs adjustment based on review feedback.")
+                    agent = TaskImprover()
+                    improve_container = st.container(border=True)
+                    review_container = st.container(border=True)
+                    with st.spinner("Improving task based on feedback..."):
+                        improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
+                        
+                    with st.spinner("Reviewing adjusted output..."):
+                        review_container.write(review_result = reviewer.review_task(execution_result, task))
+                    satisfied = check_if_satisfied(review_result)
+    
+                st.success("Task execution is satisfactory based on review.")
+                write_to_file("execution_output.txt", execution_result)
+                already_written = True
+    
+            task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
+    
+        st.success("Task plan generated successfully!")
+        download_on = True
+            
+        agent_output = read_from_file("execution_output.txt")
+        st.write(agent_output)
+        st.success("Final output has been written to a file called execution_output.txt")
+        
+        already_written = False
+        with st.expander("Finalizer", expanded=True):
+            with st.spinner("Finalizing the endresult..."):
+                finalizer = Finalizer()
+                final_output = finalizer.compile_final_output("execution_output.txt")
+                write_to_file("final_output.txt", final_output)
+    
+        st.success("Final output has been written to a file called final_output.txt")
                 
 if __name__ == "__main__":
     main()
