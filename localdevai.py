@@ -359,7 +359,7 @@ def main():
                 st.write("You can download the logfiles")
                 check_download(download_on)
     
-    if start_programming = True:
+    if start_programming == True:
         task_list = TaskList()
         for task_info in task_list_json:
             task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
