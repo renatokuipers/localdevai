@@ -290,13 +290,11 @@ def check_if_satisfied(review_result):
     return satisfied
 
 def handle_finalization_and_downloads(download_on):
-    # Finalizer to compile final output
-    with st.expander("Final Output"):
-        finalizer = Finalizer()
-        final_output = finalizer.compile_final_output("final_output", temperature)
+    with st.spinner("Creating the final output..."):
+        with st.expander("Final Output"):
+            finalizer = Finalizer()
+            final_output = finalizer.compile_final_output("final_output", temperature)
 
-    # Download buttons
-    # Only display download buttons if there is content
     if download_on and final_output:
         st.balloons()
         st.download_button(
@@ -312,22 +310,23 @@ def handle_finalization_and_downloads(download_on):
             mime=None,
         )
 
-def execute_and_review_task(task, task_list, current_task_expander):
+def execute_and_review_task(task, task_list):
     global already_written
-    
+    with st.sidebar.expander("## Current Task:", expanded=True):
+        st.write(f"{task.description}")
     st.subheader(f"Task: {task.description}")
     
     with st.spinner("Executing task..."):
         agent = TaskExecutor()
-        with st.expander(f"Executing Task: {task.description}", expanded=True):        
+        with st.expander(f"Executing Task: {task.description}", expanded=True):
             execution_result = agent.execute_task(task, task_list, history, temperature)
-            
-    with st.spinner("Reviewing the Agent output..."):
+
+    with st.spinner("Reviewing Agent output..."):
+        reviewer = TaskReviewer()
         with st.expander(f"Reviewing Task: {task.description}", expanded=True):
-            reviewer = TaskReviewer()
-            review_result = reviewer.review_task(execution_result, task, temperature)
-            satisfied = check_if_satisfied(review_result)
-            
+        review_result = reviewer.review_task(execution_result, task, temperature)
+        satisfied = check_if_satisfied(review_result)
+        
         col1, col2 = st.columns(2)
         if not satisfied:
             st.warning("Task needs adjustment based on review feedback.")
@@ -337,26 +336,22 @@ def execute_and_review_task(task, task_list, current_task_expander):
                     with st.spinner("Improving task based on feedback..."):
                         with st.container(border=True):
                             execution_result = agent.execute_task(task, task_list, history, review_result, execution_result, temperature)
+                        
                 reviewer = TaskReviewer()
                 with col2:
                     with st.spinner("Reviewing the improved task..."):
                         with st.container(border=True):
                             review_result = reviewer.review_task(execution_result, task, temperature)
                 satisfied = check_if_satisfied(review_result)
+
                 if not satisfied:
                     st.warning("Further adjustment needed based on feedback.")
                 else:
                     st.success("Task execution is satisfactory based on review.")
+
         if satisfied:
             write_to_file("execution_output", execution_result)
             already_written = True
-    task.completed = True
-
-    with current_task_expander:
-        st.markdown(f"### Current Task:\n- {task.description}")
-        st.markdown("### Completed Tasks:")
-        for completed_task in [t for t in task_list.tasks if t.completed]:
-            st.markdown(f"- {completed_task.description}")
 
 def main():
     global already_written, temperature
@@ -384,7 +379,7 @@ def main():
             )
         }
     )
-    st.session_state.already_written = False  # Using session state
+    st.session_state.already_written = False
     with st.sidebar.expander("Adjustable Settings", expanded=False):
         download_on = st.checkbox("Enable Download", False)
         st.divider()
@@ -395,11 +390,10 @@ def main():
         st.divider()
         plan_tasks = st.button("Plan Tasks")
 
-    current_task_expander = st.sidebar.expander("Task Status", expanded=True)    
-    progress_bar = st.sidebar.progress(0)
     task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"],disabled=True, help="WIP")
-    
-    # Planning phase
+
+    progress_bar = st.sidebar.progress(0)
+
     if plan_tasks:
         with st.spinner("Generating task plan..."):
             with st.expander(f"Task Planner"):
@@ -416,13 +410,11 @@ def main():
             st.session_state["task_list"].append({"description": task.description, "completed": False})
 
             if task_status_filter in ["All", "Pending"]:
-                execute_and_review_task(task, task_list, current_task_expander)
+                execute_and_review_task(task, task_list)
 
-            # Update the progress bar after each task
             progress_percentage = int((index + 1) / total_tasks * 100)
             progress_bar.progress(progress_percentage)
                 
-        # Finalization and download buttons
         handle_finalization_and_downloads(download_on)
 
 if __name__ == "__main__":
