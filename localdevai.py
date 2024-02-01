@@ -392,8 +392,6 @@ def main():
 
     task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"],disabled=True, help="WIP")
 
-    progress_bar = st.sidebar.progress(0)
-
     if plan_tasks:
         with st.spinner("Generating task plan..."):
             with st.expander(f"Task Planner"):
@@ -411,9 +409,6 @@ def main():
 
             if task_status_filter in ["All", "Pending"]:
                 execute_and_review_task(task, task_list)
-
-            progress_percentage = int((index + 1) / total_tasks * 100)
-            progress_bar.progress(progress_percentage)
                 
         handle_finalization_and_downloads(download_on)
 
