@@ -291,7 +291,6 @@ def main():
     global already_written
     download_on = False
     
-    tab1, tab2, tab3, tab4 = st.tabs(["Planned list", "Task Executing", "Execution output", "Final Output"])
     st.set_page_config(
         page_title="Local devai",
         page_icon=":clipboard:",
@@ -317,7 +316,7 @@ def main():
         }
     )
 
-
+    tab1, tab2, tab3, tab4 = st.tabs(["Planned list", "Task Executing", "Execution output", "Final Output"])
     st.title("Local Autonomous Development AI")
 
     with st.sidebar:
