@@ -297,9 +297,9 @@ def plan(user_input, download_on):
         else:
             pass
 
-def check_download(download_on)
+def check_download(download_on):
     if download_on:
-        st.baloons()
+        st.balloons()
         st.download_button(
                 label = 'Download full execution log',
                 data = execution_result,
