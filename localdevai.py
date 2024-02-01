@@ -19,6 +19,7 @@ history = ""
 temp_memory = ""
 user_input = ""
 agent_output = ""
+already_written = False
 
 ### System messages ###
 Custom_SystemMessage = ()
@@ -118,8 +119,7 @@ class Finalizer:
     
     def compile_final_output(self, file_path):
         print_section_header("Finalizing the answer...")
-        with open(file_path, 'r', encoding='utf-8') as file:
-            content = file.read()
+        content = read_from_file(file_path)
         history = [
             {"role": "system", "content": "You are a finalizer. Now, please create 1 single coherent output that uses ALL the content that is generated throughout the given content.(If the content is mainly code, show the full final code based on all the codesnippets. If the content is a story, write the full complete story based on all the content, If the content is a PRD, write the full PRD based on all the snippets, etc...). Here is the content:"},
             {"role": "user", "content": content}
@@ -250,12 +250,20 @@ def get_user_goal():
     print(goal)
     return goal
 
+def read_from_file(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+    return content
+
 def write_to_file(file_path, text):
     """Writes text to a file."""
-    
-    with open(file_path, 'a', encoding='utf-8') as file:
-        file.write(text + "\n")
-
+    if not already_written:
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.write(text + "\n")
+    else:
+        with open(file_path, 'a', encoding='utf-8') as file:
+                    file.write(text + "\n")
+            
 def print_section_header(title):
     """Prints a section header with a specific color."""
     
@@ -280,23 +288,25 @@ def check_if_satisfied(review_result):
 
 
 def main():
+    global already_written
+    tab1, tab2, tab3, tab4 = st.tabs(["Planned list", "Task Executing", "Execution output", "Final Output"])
     st.set_page_config(
         page_title="Local devai",
         page_icon=":clipboard:",
         initial_sidebar_state="auto",
+        layout = "wide",
         menu_items={
             "About": (
-                "## Local devai - Task Planner and Executor\n\n"
-                "Local devai is an AI-powered task planner and executor designed to assist users "
-                "in generating comprehensive task plans and executing them efficiently. With its "
-                "intelligent agents, Local devai guides users through the task planning process, "
-                "provides step-by-step execution instructions, and offers insightful reviews to "
+                "## Local devai\n\n"
+                "Local devai is an AI-powered task planner and executor designed to autonomously generate the goal that the user inputs."
+                "With its intelligent agents, Local devai shows the user the task planning process, "
+                "shows a step-by-step execution process, and has internal reviews to "
                 "ensure tasks are completed successfully.\n\n"
                 "Key Features:\n"
                 "- Generate task plans based on user input\n"
                 "- Execute tasks with intelligent agents\n"
-                "- Review task outputs for accuracy and completeness\n\n"
-                "Local devai simplifies complex workflows and empowers users to achieve their goals "
+                "- Review task outputs from agents for accuracy and completeness\n\n"
+                "Local devai simplifies complex workflows and empowers users to achieve their goals with a single input"
                 "effectively. It can be seamlessly integrated with local Language Model (LLM) models "
                 "such as LM Studio, LlamaCPP, or oLlama, enabling users to leverage the power of "
                 "advanced language models for task planning and execution. Explore its capabilities "
@@ -311,58 +321,70 @@ def main():
     user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
 
     if st.button("Plan Tasks", key="plan_button"):
-        with st.expander("Planner"):
-            with st.spinner("Generating task plan..."):
-                task_planner = TaskPlanner(user_input)
-                task_list_json = task_planner.generate_plan()
+        with tab1:
+            st.header("The plan to be executed by the agents...")
+            with st.expander("Planner", expanded=False):
+                with st.spinner("Generating task plan..."):
+                    task_planner = TaskPlanner(user_input)
+                    task_list_json = task_planner.generate_plan()
 
-        task_list = TaskList()
-        for task_info in task_list_json:
-            task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
-            task_list.add_task(task)
-
-        task_progress = []
-        
-        for task in task_list.tasks:
-            st.subheader(f"Task: {task.description}")
-
-            with st.expander("Task Executor"):
-                agent = TaskExecutor()
-                with st.spinner("Executing task..."):
-                    execution_result = agent.execute_task(task, task_list, history)
-
-            with st.expander("Task Reviewer"):
-                reviewer = TaskReviewer()
-                with st.spinner("Reviewing task output..."):
-                    review_result = reviewer.review_task(execution_result, task)
-                satisfied = check_if_satisfied(review_result)
-
-                if not satisfied:
-                    st.warning("Task needs adjustment based on review feedback.")
-                    agent = TaskImprover()
-                    improve_container = st.container(border=True)
-                    review_container = st.container(border=True)
-                    with st.spinner("Improving task based on feedback..."):
-                        improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
-                        
-                    with st.spinner("Reviewing adjusted output..."):
-                        review_container.write(review_result = reviewer.review_task(execution_result, task))
+        with tab2:
+            st.header("All steps of development by the agents...")
+            task_list = TaskList()
+            for task_info in task_list_json:
+                task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
+                task_list.add_task(task)
+    
+            task_progress = []
+            
+            for task in task_list.tasks:
+                st.subheader(f"Task: {task.description}")
+    
+                with st.expander("Task Executor", expanded=True):
+                    agent = TaskExecutor()
+                    with st.spinner("Executing task..."):
+                        execution_result = agent.execute_task(task, task_list, history)
+    
+                with st.expander("Task Reviewer", expanded=True):
+                    reviewer = TaskReviewer()
+                    with st.spinner("Reviewing task output..."):
+                        review_result = reviewer.review_task(execution_result, task)
                     satisfied = check_if_satisfied(review_result)
+    
+                    if not satisfied:
+                        st.warning("Task needs adjustment based on review feedback.")
+                        agent = TaskImprover()
+                        improve_container = st.container(border=True)
+                        review_container = st.container(border=True)
+                        with st.spinner("Improving task based on feedback..."):
+                            improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
+                            
+                        with st.spinner("Reviewing adjusted output..."):
+                            review_container.write(review_result = reviewer.review_task(execution_result, task))
+                        satisfied = check_if_satisfied(review_result)
+    
+                    st.success("Task execution is satisfactory based on review.")
+                    write_to_file("execution_output.txt", execution_result)
+                    already_written = True
+    
+                task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
+    
+            st.success("Task plan generated successfully!")
+        with tab3:
+            st.header("The full log from the agents....")
+            agent_output = read_from_file("execution_output.txt")
+            st.write(agent_output)
 
-                st.success("Task execution is satisfactory based on review.")
-                write_to_file("execution_output.txt", execution_result)
+        with tab4:
+            st.header("The final output....")
+            already_written = False
+            with st.expander("Finalizer", expanded=True):
+                with st.spinner("Finalizing the endresult..."):
+                    finalizer = Finalizer()
+                    final_output = finalizer.compile_final_output("execution_output.txt")
+                    write_to_file("final_output.txt", final_output)
 
-            task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
-
-        st.success("Task plan generated successfully!")
-
-        with st.expander("Finalizer"):
-            with st.spinner("Finalizing the endresult..."):
-                finalizer = Finalizer()
-                final_output = finalizer.compile_final_output("execution_output.txt")
-                write_to_file("final_output.txt", final_output)
-
-        st.empty()
+        
         st.balloons()
         st.success("Final output has been written to a file called final_output.txt")
         st.download_button(
