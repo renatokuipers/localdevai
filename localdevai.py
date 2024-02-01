@@ -397,7 +397,7 @@ def main():
         task_status_filter = st.selectbox("Filter tasks by status", ["All", "Pending", "Completed"])
         st.divider()
         st.markdown("# Task Status")
-        st.markdown(## Current Task:)
+        st.markdown("## Current Task:")
 
     # Planning phase
     if plan_tasks:
