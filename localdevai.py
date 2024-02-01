@@ -334,13 +334,13 @@ def execute_and_review_task(task, task_list):
                 agent = TaskImprover()
                 with col1:
                     with st.spinner("Improving task based on feedback..."):
-                        with st.container(height=500, border=True):
+                        with st.container(height=300, border=True):
                             execution_result = agent.execute_task(task, task_list, history, review_result, execution_result, temperature)
                         
                 reviewer = TaskReviewer()
                 with col2:
                     with st.spinner("Reviewing the improved task..."):
-                        with st.container(height=500, border=True):
+                        with st.container(height=300, border=True):
                             review_result = reviewer.review_task(execution_result, task, temperature)
                 satisfied = check_if_satisfied(review_result)
 
