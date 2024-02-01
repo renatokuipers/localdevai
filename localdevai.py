@@ -372,7 +372,7 @@ def main():
     
         task_progress = []
         
-        for task in task_list.tasks:
+        for task in st.session_state.task_list.tasks:
             st.subheader(f"Task: {task.description}")
     
             with st.expander("Task Executor", expanded=True):
