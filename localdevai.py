@@ -345,9 +345,8 @@ def main():
     with st.sidebar:
         user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
         if st.button("Plan Tasks", key="plan_button"):
-            with st.expander("Planner"):
-                with st.spinner("Planning the actions..."):
-                    task_list_json = plan(user_input, download_on)
+            with st.spinner("Planning the actions..."):
+                task_list_json = plan(user_input, download_on)
         on = st.toggle('Check if output files can be downloaded')
         if on:
             if not download_on:
