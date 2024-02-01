@@ -154,9 +154,9 @@ def generate_ceo_system_message(input_text):
     """Generates CEO system message based on user input."""
 
     return (
-        f"Based on the goal: '{input_text}', generate a comprehensive step-by-step plan for developing the goal. "
-        "The plan should include a series at a maximum of 10 tasks, each clearly defined to contribute towards achieving this goal and in the correct order of execution. "
-        "For each task, STRICTLY AND ONLY provide the list in the following format and nothing else: \n"
+        f"Based on the goal: '{input_text}', generate a logical step-by-step plan for reaching this goal. "
+        "The plan should include a series of a maximum of 10 tasks, each clearly defined to contribute towards achieving this goal and in the correct order of execution. "
+        "For each task, STRICTLY AND ONLY provide the following format and nothing else: \n"
         "```\n"
         "- ID: A unique identifier number for the task.(single INT)\n"
         "- Description: A clear and concise explanation of what the task involves.\n"
@@ -185,19 +185,21 @@ def generate_task_agent_system_message(tasklist, history, task_role, task_descri
     """Generates Task Agent system message."""
 
     return (
-        f"Full tasklist:\n{tasklist}\n"
+        f"Overall Goal:\n{user_input}\n\n"
+        f"Full tasklist:\n{tasklist}\n\n"
         f"Previous actions:\n{history}\n\n"
         f"Current role: {task_role}\n"
         f"Current task: {task_description}\n"
-        "Try to achieve the best result to the best of your abilities.\n"
+        "Based on the Overall Goal and even more importantly the Current Task, execute the current task to the best of your abilities.\n"
         "(If the task is to create code, please only output the code and make sure that the code is fully complete without placeholders, TODO's or skeleton code).\n"
+        "(If the task is to write a story, please try your very best, to get the best possibly story out there).\n"
     )
 
-def generate_task_improver_agent_system_message(tasklist, history, task_role, task_description, feedback, agentoutput):
+def generate_task_improver_agent_system_message(tasklist, history, task_role, task_description, feedback, agentoutput, userinput, user_input):
     """Generates Task Agent system message."""
 
     return (
-        #f"Full tasklist:\n{tasklist}\n"
+        f"Full tasklist:\n{tasklist}\n\n"
         f"Previous actions:\n{history}\n\n"
         f"Your last output:\n{agentoutput}\n\n"
         f"Current role: {task_role}\n"
@@ -205,6 +207,7 @@ def generate_task_improver_agent_system_message(tasklist, history, task_role, ta
         f"Feedback: {feedback}\n"
         "Based on the feedback, improve and expand your last output so it will strictly adhere to the feedback.\n"
         "(If the task is to create code, please only output the code and make sure that the code is fully complete without placeholders, TODO's or skeleton code).\n"
+        "(If the task is to write a story, please try your very best, to get the best possibly story out there).\n"
     )
 
 def generate_reviewer_system_message(user_input, agent_output, task):
