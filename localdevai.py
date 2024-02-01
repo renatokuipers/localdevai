@@ -311,9 +311,10 @@ def main():
     user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
 
     if st.button("Plan Tasks", key="plan_button"):
-        with st.spinner("Generating task plan..."):
-            task_planner = TaskPlanner(user_input)
-            task_list_json = task_planner.generate_plan()
+        with st.expander("Planner"):
+            with st.spinner("Generating task plan..."):
+                task_planner = TaskPlanner(user_input)
+                task_list_json = task_planner.generate_plan()
 
         task_list = TaskList()
         for task_info in task_list_json:
@@ -329,7 +330,6 @@ def main():
                 agent = TaskExecutor()
                 with st.spinner("Executing task..."):
                     execution_result = agent.execute_task(task, task_list, history)
-                st.code(execution_result, language='plaintext')
 
             with st.expander("Task Reviewer"):
                 reviewer = TaskReviewer()
