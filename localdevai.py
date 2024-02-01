@@ -144,6 +144,7 @@ def generate_response(messages, temperature=0.7):
             print(chunk.choices[0].delta.content, end="", flush=True)
             response += chunk.choices[0].delta.content
             response_container.write(response)
+    st.write("\n")
     return response
 
 def generate_ceo_system_message(input_text):
