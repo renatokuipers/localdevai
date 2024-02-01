@@ -297,6 +297,23 @@ def plan(user_input, download_on):
         else:
             pass
 
+def check_download(download_on)
+    if download_on:
+        st.baloons()
+        st.download_button(
+                label = 'Download full execution log',
+                data = execution_result,
+                file_name = 'execution_output.txt',
+                mime=None,
+            )
+        st.download_button(
+            label = 'Download Final output',
+            data = final_output,
+            file_name = 'final_output.txt',
+            mime=None,
+        )
+    else:
+        pass
 
 def main():
     global already_written
@@ -332,25 +349,16 @@ def main():
     with st.sidebar:
         user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
         if st.button("Plan Tasks", key="plan_button"):
-            with st.expander("Planner")
-                with st.spinner("Planning the actions...")
+            with st.expander("Planner"):
+                with st.spinner("Planning the actions..."):
                     plan(user_input, download_on)
-            if download_on:
-                st.baloons()
-                st.download_button(
-                        label = 'Download full execution log',
-                        data = execution_result,
-                        file_name = 'execution_output.txt',
-                        mime=None,
-                    )
-                st.download_button(
-                    label = 'Download Final output',
-                    data = final_output,
-                    file_name = 'final_output.txt',
-                    mime=None,
-                )
+        on = st.toggle('Check if output files can be downloaded')
+        if on:
+            if not download_on:
+                st.write("Can't download")
             else:
-                pass
+                st.write("You can download the logfiles")
+                check_download(download_on)
     
     task_list = TaskList()
     for task_info in task_list_json:
