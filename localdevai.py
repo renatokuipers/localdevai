@@ -340,10 +340,13 @@ def main():
                 if not satisfied:
                     st.warning("Task needs adjustment based on review feedback.")
                     agent = TaskImprover()
+                    improve_container = st.container(border=True)
+                    review_container = st.container(border=True)
                     with st.spinner("Improving task based on feedback..."):
-                        execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
+                        improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
+                        
                     with st.spinner("Reviewing adjusted output..."):
-                        review_result = reviewer.review_task(execution_result, task)
+                        review_container.write(review_result = reviewer.review_task(execution_result, task))
                     satisfied = check_if_satisfied(review_result)
 
                 st.success("Task execution is satisfactory based on review.")
