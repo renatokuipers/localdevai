@@ -329,21 +329,23 @@ def main():
                 with st.spinner("Generating task plan..."):
                     task_planner = TaskPlanner(user_input)
                     task_list_json = task_planner.generate_plan()
-            if download_on:
-                st.download_button(
-                        label = 'Download full execution log',
-                        data = execution_result,
-                        file_name = 'execution_output.txt',
+            while not download_on:
+                if download_on:
+                    st.balloons
+                    st.download_button(
+                            label = 'Download full execution log',
+                            data = execution_result,
+                            file_name = 'execution_output.txt',
+                            mime=None,
+                        )
+                    st.download_button(
+                        label = 'Download Final output',
+                        data = final_output,
+                        file_name = 'final_output.txt',
                         mime=None,
                     )
-                st.download_button(
-                    label = 'Download Final output',
-                    data = final_output,
-                    file_name = 'final_output.txt',
-                    mime=None,
-                )
-            else:
-                continue
+                else:
+                    pass
 
     with tab2:
         st.header("All steps of development by the agents...")
@@ -390,8 +392,6 @@ def main():
         download_on = True
         if download_on:
             st.balloons()
-        else:
-            continue
             
     with tab3:
         st.header("The full log from the agents....")
