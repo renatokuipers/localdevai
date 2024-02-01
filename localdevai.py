@@ -311,10 +311,15 @@ def handle_finalization_and_downloads(download_on):
             mime=None,
         )
 
-def execute_and_review_task(task, task_list):
+def execute_and_review_task(task, task_list, current_task_expander):
     global already_written
-    with st.sidebar.expander("## Current Task:", expanded=True):
-        st.write(f"{task.description}")
+    
+    with current_task_expander:
+        st.markdown(f"### Current Task:\n- {task.description}")
+        st.markdown("### Completed Tasks:")
+        for completed_task in [t for t in task_list.tasks if t.completed]:
+            st.markdown(f"- {completed_task.description}")
+
     st.subheader(f"Task: {task.description}")
 
     # Expander for task executor
@@ -394,8 +399,10 @@ def main():
         st.divider()
         plan_tasks = st.button("Plan Tasks")
 
+    current_task_expander = st.sidebar.expander("Task Status", expanded=True)    
+    progress_bar = st.sidebar.progress(0)
     task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"],disabled=True, help="WIP")
-
+    
     # Planning phase
     if plan_tasks:
         with st.expander(f"Task Planner"):
@@ -404,7 +411,7 @@ def main():
                 task_list_json = task_planner.generate_plan(temperature)
 
         task_list = TaskList()
-        st.session_state["task_list"] = []  # Initialize task list in session state
+        st.session_state["task_list"] = []
 
         
         for index, task_info in enumerate(task_list_json):
@@ -413,7 +420,11 @@ def main():
             st.session_state["task_list"].append({"description": task.description, "completed": False})
 
             if task_status_filter in ["All", "Pending"]:
-                execute_and_review_task(task, task_list)  # Execute and review each task
+                execute_and_review_task(task, task_list, current_task_expander)
+
+            # Update the progress bar after each task
+            progress_percentage = int((index + 1) / total_tasks * 100)
+            progress_bar.progress(progress_percentage)
                 
         # Finalization and download buttons
         handle_finalization_and_downloads(download_on)
