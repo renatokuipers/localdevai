@@ -340,11 +340,14 @@ def main():
         }
     )
 
-    st.title("Task Planner and Executor")
+    # Sidebar for user input and task planning
+    with st.sidebar:
+        st.title("Task Planner")
+        user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
+        plan_tasks = st.button("Plan Tasks")
 
-    user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
-
-    if st.button("Plan Tasks", key="plan_button"):
+    # Main area for task execution and review
+    if plan_tasks:
         with st.spinner("Generating task plan..."):
             task_planner = TaskPlanner(user_input)
             task_list_json = task_planner.generate_plan()
@@ -359,36 +362,57 @@ def main():
         for task in task_list.tasks:
             st.subheader(f"Task: {task.description}")
 
-            with st.expander("Task Executor"):
-                agent = TaskExecutor()
-                with st.spinner("Executing task..."):
-                    execution_result = agent.execute_task(task, task_list, history)
-                st.code(execution_result, language='plaintext')
+            # Use containers for each agent's results
+            with st.container():
+                agent_container = st.beta_container()
+                with agent_container:
+                    with st.expander(f"Executing Task: {task.description}"):
+                        agent = TaskExecutor()
+                        with st.spinner("Executing task..."):
+                            execution_result = agent.execute_task(task, task_list, history)
+                        st.code(execution_result, language='plaintext')
 
-            with st.expander("Task Reviewer"):
-                reviewer = TaskReviewer()
-                review_result = reviewer.review_task(execution_result, task)
-                satisfied = check_if_satisfied(review_result)
+                reviewer_container = st.beta_container()
+                with reviewer_container:
+                    with st.expander(f"Reviewing Task: {task.description}"):
+                        reviewer = TaskReviewer()
+                        review_result = reviewer.review_task(execution_result, task)
+                        satisfied = check_if_satisfied(review_result)
 
-                if not satisfied:
-                    st.warning("Task needs adjustment based on review feedback.")
-                    agent = TaskImprover()
-                    with st.spinner("Improving task based on feedback..."):
-                        execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
-                    st.code(execution_result, language='plaintext')
-                    review_result = reviewer.review_task(execution_result, task)
-                    satisfied = check_if_satisfied(review_result)
+                        if not satisfied:
+                            st.warning("Task needs adjustment based on review feedback.")
+                            agent = TaskImprover()
+                            with st.spinner("Improving task based on feedback..."):
+                                execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
+                            st.code(execution_result, language='plaintext')
+                            review_result = reviewer.review_task(execution_result, task)
+                            satisfied = check_if_satisfied(review_result)
 
-                st.success("Task execution is satisfactory based on review.")
+                        st.success("Task execution is satisfactory based on review.")
 
             task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
 
-        st.success("Task plan generated successfully!")
-
-        with st.expander("Finalizer"):
-            finalizer = Finalizer()
-            final_output = finalizer.compile_final_output(task_progress)
-            st.code(final_output, language='plaintext')
+        with st.container():
+            finalizer_container = st.beta_container()
+            with finalizer_container:
+                with st.expander("Final Output"):
+                    finalizer = Finalizer()
+                    final_output = finalizer.compile_final_output(task_progress)
+                    
+        if download_on:
+            st.balloons()
+            st.download_button(
+                label='Download full execution log',
+                data=execution_result,
+                file_name='execution_output.txt',
+                mime=None,
+            )
+            st.download_button(
+                label='Download Final output',
+                data=final_output,
+                file_name='final_output.txt',
+                mime=None,
+            )
 
 if __name__ == "__main__":
     main()
