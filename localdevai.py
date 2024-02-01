@@ -305,8 +305,6 @@ def check_download(download_on):
         pass
 
 def main():
-    if 'already_written' not in st.session_state:
-        st.session_state['already_written'] = False
     global already_written
     download_on = False
     st.session_state.already_written = False  # Using session state
@@ -342,16 +340,11 @@ def main():
         user_input = st.text_area("Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
         plan_tasks = st.button("Plan Tasks")
 
-        # Advanced sidebar options
-        # Example: priority_selector = st.selectbox("Select Task Priority", ['High', 'Medium', 'Low'])
-        
-        # Task status and filtering
+        # Task status in sidebar
         st.markdown("## Task Status")
-        filter_option = st.selectbox("Filter tasks by", ['All', 'Completed', 'Pending'])
         for task in st.session_state.get("task_list", []):
-            if filter_option == 'All' or task.get("completed", False) == (filter_option == 'Completed'):
-                status = "Completed" if task.get("completed", False) else "Pending"
-                st.markdown(f"- {task['description']}: **{status}**")
+            status = "Completed" if task.get("completed", False) else "Pending"
+            st.markdown(f"- {task['description']}: **{status}**")
 
     # planning phase
     if plan_tasks:
