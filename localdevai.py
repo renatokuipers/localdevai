@@ -379,14 +379,14 @@ def main():
     )
     st.session_state.already_written = False  # Using session state
     with st.sidebar.expander("Adjustable Settings"):
-        download_on = st.sidebar.checkbox("Enable Download", False)
+        download_on = st.checkbox("Enable Download", False)
         st.divider()
-        temperature = st.sidebar.slider("Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, help=f"Lower values make the Agents more deterministic, meaning that that the Agents will be less creative.\nHigher values mean that the Agents will be more creative, with the possibility that the output will have lots of hallucinations.")
+        temperature = st.slider("Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, help=f"Lower values make the Agents more deterministic, meaning that that the Agents will be less creative.\nHigher values mean that the Agents will be more creative, with the possibility that the output will have lots of hallucinations.")
 
     with st.sidebar.expander("Input"):
-        user_input = st.sidebar.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
+        user_input = st.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
         st.divider()
-        plan_tasks = st.sidebar.button("Plan Tasks")
+        plan_tasks = st.button("Plan Tasks")
 
     # Task status in sidebar
     st.sidebar.markdown("## Task Status")
