@@ -59,8 +59,9 @@ class TaskList:
 class TaskPlanner:
     """Class for planning tasks."""
     
-    def __init__(self, user_input):
+    def __init__(self, user_input, temperature):
         self.user_input = user_input
+        self.temperature = temperature
 
     def generate_plan(self, temperature):
         print_section_header("Task Planning")
@@ -69,7 +70,7 @@ class TaskPlanner:
             {"role": "user", "content": self.user_input}
         ]
         with st.chat_message("ai"):
-            plan = generate_response(history, temperature)
+            plan = generate_response(history, self.temperature)
         return parse_plan_to_json(plan)
 
 class TaskExecutor:
