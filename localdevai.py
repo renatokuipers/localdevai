@@ -342,7 +342,7 @@ def main():
 
     st.title("Task Planner and Executor")
 
-    user_input = st.text_input("Enter what the AI should make:")
+    user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
 
     if st.button("Plan Tasks", key="plan_button"):
         with st.spinner("Generating task plan..."):
