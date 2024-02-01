@@ -1,12 +1,5 @@
-import os
-import re
-import json
-from dotenv import load_dotenv
-from openai import OpenAI
-import streamlit as st
 import subprocess
 import sys
-
 def install_package(package):
     """Install a Python package using pip."""
     try:
@@ -15,6 +8,24 @@ def install_package(package):
         print(f"Error installing package {package}: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+
+# List of packages to install
+packages_to_install = ["openai", "python-dotenv", "colorama"]
+
+# Install each package
+for package in packages_to_install:
+    print(f"Installing {package}...")
+    install_package(package)
+
+print("Installation complete.")
+
+
+import os
+import re
+import json
+from dotenv import load_dotenv
+from openai import OpenAI
+import streamlit as st
 
 ### Constants ###
 MODEL_LOCAL = "local_model"
@@ -368,13 +379,4 @@ def main():
                 final_output = finalizer.compile_final_output(task_progress)
 
 if __name__ == "__main__":
-    # List of packages to install
-    packages_to_install = ["openai", "python-dotenv", "colorama"]
-
-    # Install each package
-    for package in packages_to_install:
-        print(f"Installing {package}...")
-        install_package(package)
-
-    print("Installation complete.")
     main()
