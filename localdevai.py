@@ -316,10 +316,10 @@ def main():
         }
     )
 
-    tab1, tab2, tab3, tab4 = st.tabs(["Planned list", "Task Executing", "Execution output", "Final Output"])
     st.title("Local Autonomous Development AI")
 
     with st.sidebar:
+        user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
         while not download_on:
             if download_on:
                 st.baloons()
@@ -337,94 +337,77 @@ def main():
                 )
             else:
                 pass
-        user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
         
-    with tab1:
-        st.header("The plan to be executed by the agents...")
-        
-        if st.button("Plan Tasks", key="plan_button"):
-            with st.expander("Planner", expanded=False):
-                with st.spinner("Generating task plan..."):
-                    task_planner = TaskPlanner(user_input)
-                    task_list_json = task_planner.generate_plan()
-            while not download_on:
-                if download_on:
-                    st.balloons
-                else:
-                    pass
+    st.header("The plan to be executed by the agents...")
+    
+    if st.button("Plan Tasks", key="plan_button"):
+        with st.expander("Planner", expanded=False):
+            with st.spinner("Generating task plan..."):
+                task_planner = TaskPlanner(user_input)
+                task_list_json = task_planner.generate_plan()
+        while not download_on:
+            if download_on:
+                st.balloons
+            else:
+                pass
 
-    with tab2:
-        st.header("All steps of development by the agents...")
-        task_list = TaskList()
-        for task_info in task_list_json:
-            task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
-            task_list.add_task(task)
+    st.header("All steps of development by the agents...")
+    task_list = TaskList()
+    for task_info in task_list_json:
+        task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
+        task_list.add_task(task)
 
-        task_progress = []
-        
-        for task in task_list.tasks:
-            st.subheader(f"Task: {task.description}")
+    task_progress = []
+    
+    for task in task_list.tasks:
+        st.subheader(f"Task: {task.description}")
 
-            with st.expander("Task Executor", expanded=True):
-                agent = TaskExecutor()
-                with st.spinner("Executing task..."):
-                    execution_result = agent.execute_task(task, task_list, history)
+        with st.expander("Task Executor", expanded=True):
+            agent = TaskExecutor()
+            with st.spinner("Executing task..."):
+                execution_result = agent.execute_task(task, task_list, history)
 
-            with st.expander("Task Reviewer", expanded=True):
-                reviewer = TaskReviewer()
-                with st.spinner("Reviewing task output..."):
-                    review_result = reviewer.review_task(execution_result, task)
+        with st.expander("Task Reviewer", expanded=True):
+            reviewer = TaskReviewer()
+            with st.spinner("Reviewing task output..."):
+                review_result = reviewer.review_task(execution_result, task)
+            satisfied = check_if_satisfied(review_result)
+
+            if not satisfied:
+                st.warning("Task needs adjustment based on review feedback.")
+                agent = TaskImprover()
+                improve_container = st.container(border=True)
+                review_container = st.container(border=True)
+                with st.spinner("Improving task based on feedback..."):
+                    improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
+                    
+                with st.spinner("Reviewing adjusted output..."):
+                    review_container.write(review_result = reviewer.review_task(execution_result, task))
                 satisfied = check_if_satisfied(review_result)
 
-                if not satisfied:
-                    st.warning("Task needs adjustment based on review feedback.")
-                    agent = TaskImprover()
-                    improve_container = st.container(border=True)
-                    review_container = st.container(border=True)
-                    with st.spinner("Improving task based on feedback..."):
-                        improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
-                        
-                    with st.spinner("Reviewing adjusted output..."):
-                        review_container.write(review_result = reviewer.review_task(execution_result, task))
-                    satisfied = check_if_satisfied(review_result)
+            st.success("Task execution is satisfactory based on review.")
+            write_to_file("execution_output.txt", execution_result)
+            already_written = True
 
-                st.success("Task execution is satisfactory based on review.")
-                write_to_file("execution_output.txt", execution_result)
-                already_written = True
+        task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
 
-            task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
-
-        st.success("Task plan generated successfully!")
-        download_on = True
-        if download_on:
-            st.balloons()
-            
-    with tab3:
-        st.header("The full log from the agents....")
-        agent_output = read_from_file("execution_output.txt")
-        st.write(agent_output)
-        st.success("Final output has been written to a file called execution_output.txt")
-        while not download_on:
-            if download_on:
-                st.baloons()
-            else:
-                pass
+    st.success("Task plan generated successfully!")
+    download_on = True
+        
+    st.header("The full log from the agents....")
+    agent_output = read_from_file("execution_output.txt")
+    st.write(agent_output)
+    st.success("Final output has been written to a file called execution_output.txt")
     
-    with tab4:
-        st.header("The final output....")
-        already_written = False
-        with st.expander("Finalizer", expanded=True):
-            with st.spinner("Finalizing the endresult..."):
-                finalizer = Finalizer()
-                final_output = finalizer.compile_final_output("execution_output.txt")
-                write_to_file("final_output.txt", final_output)
+    st.header("The final output....")
+    already_written = False
+    with st.expander("Finalizer", expanded=True):
+        with st.spinner("Finalizing the endresult..."):
+            finalizer = Finalizer()
+            final_output = finalizer.compile_final_output("execution_output.txt")
+            write_to_file("final_output.txt", final_output)
 
-        st.success("Final output has been written to a file called final_output.txt")
-        while not download_on:
-            if download_on:
-                st.baloons()
-            else:
-                pass
+    st.success("Final output has been written to a file called final_output.txt")
                 
 if __name__ == "__main__":
     main()
