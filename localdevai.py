@@ -286,27 +286,71 @@ def check_if_satisfied(review_result):
         satisfied = True
     return satisfied
 
-def check_download(download_on):
-    if download_on:
+def handle_finalization_and_downloads(download_on):
+    # Finalizer to compile final output
+    with st.expander("Final Output"):
+        finalizer = Finalizer()
+        final_output = finalizer.compile_final_output("final_output")
+
+    # Download buttons
+    # Only display download buttons if there is content
+    if download_on and final_output:
         st.balloons()
         st.download_button(
-                label = 'Download full execution log',
-                data = execution_result,
-                file_name = 'execution_output.txt',
-                mime=None,
-            )
-        st.download_button(
-            label = 'Download Final output',
-            data = final_output,
-            file_name = 'final_output.txt',
+            label='Download full execution log',
+            data=execution_result,
+            file_name='execution_output.txt',
             mime=None,
         )
-    else:
-        pass
+        st.download_button(
+            label='Download Final output',
+            data=final_output,
+            file_name='final_output.txt',
+            mime=None,
+        )
+
+def execute_and_review_task(task, task_list):
+    global already_written
+    st.subheader(f"Task: {task.description}")
+
+    # Expander for task executor
+    with st.expander(f"Executing Task: {task.description}"):
+        agent = TaskExecutor()
+        with st.spinner("Executing task..."):
+            execution_result = agent.execute_task(task, task_list, history)
+
+    # Expander for first task reviewer
+    with st.expander(f"Reviewing Task: {task.description}"):
+        reviewer = TaskReviewer()
+        review_result = reviewer.review_task(execution_result, task)
+        satisfied = check_if_satisfied(review_result)
+
+        if not satisfied:
+            st.warning("Task needs adjustment based on review feedback.")
+            # Task improvement logic
+            while not satisfied:
+                agent = TaskImprover()
+                with st.spinner("Improving task based on feedback..."):
+                    execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
+
+                reviewer = TaskReviewer()
+                with st.spinner("Reviewing the improved task..."):
+                    review_result = reviewer.review_task(execution_result, task)
+                satisfied = check_if_satisfied(review_result)
+
+                if not satisfied:
+                    st.warning("Further adjustment needed based on feedback.")
+                else:
+                    st.success("Task execution is satisfactory based on review.")
+
+        # Write to file if the task is satisfied
+        if satisfied:
+            write_to_file("execution_output", execution_result)
+            already_written = True  # Update the flag after first write
 
 def main():
     global already_written
-    download_on = False
+    download_on = st.sidebar.checkbox("Enable Download", False)
     st.session_state.already_written = False  # Using session state
     
     st.set_page_config(
@@ -334,19 +378,14 @@ def main():
         }
     )
 
-    # Sidebar for user input and task planning
-    with st.sidebar:
-        st.title("Local Devai")
-        user_input = st.text_area("Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
-        plan_tasks = st.button("Plan Tasks")
+    user_input = st.sidebar.text_area("Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
+    plan_tasks = st.sidebar.button("Plan Tasks")
 
-        # Task status in sidebar
-        st.markdown("## Task Status")
-        for task in st.session_state.get("task_list", []):
-            status = "Completed" if task.get("completed", False) else "Pending"
-            st.markdown(f"- {task['description']}: **{status}**")
+    # Task status in sidebar
+    st.sidebar.markdown("## Task Status")
+    task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"])
 
-    # planning phase
+    # Planning phase
     if plan_tasks:
         with st.expander(f"Task Planner"):
             with st.spinner("Generating task plan..."):
@@ -356,74 +395,16 @@ def main():
         task_list = TaskList()
         st.session_state["task_list"] = []  # Initialize task list in session state
 
-        for task_info in task_list_json:
+        for index, task_info in enumerate(task_list_json):
             task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
             task_list.add_task(task)
             st.session_state["task_list"].append({"description": task.description, "completed": False})
 
-        task_progress = []
-
-        for task in task_list.tasks:
-            st.subheader(f"Task: {task.description}")
-
-            # Expander for task executor
-            with st.expander(f"Executing Task: {task.description}"):
-                agent = TaskExecutor()
-                with st.spinner("Executing task..."):
-                    execution_result = agent.execute_task(task, task_list, history)
-
-            # Expander for first task reviewer
-            with st.expander(f"Reviewing Task: {task.description}"):
-                reviewer = TaskReviewer()
-                review_result = reviewer.review_task(execution_result, task)
-                satisfied = check_if_satisfied(review_result)
-
-                if not satisfied:
-                    st.warning("Task needs adjustment based on review feedback.")
-                    # Task improvement logic
-                    while not satisfied:
-                        agent = TaskImprover()
-                        with st.spinner("Improving task based on feedback..."):
-                            execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
-
-                        reviewer = TaskReviewer()
-                        with st.spinner("Reviewing the improved task..."):
-                            review_result = reviewer.review_task(execution_result, task)
-                        satisfied = check_if_satisfied(review_result)
-
-                        if not satisfied:
-                            st.warning("Further adjustment needed based on feedback.")
-                        else:
-                            st.success("Task execution is satisfactory based on review.")
-
-                # Write to file if the task is satisfied
-                if satisfied:
-                    write_to_file("execution_output", execution_result)
-                    already_written = True  # Update the flag after first write
-                    
-            task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
-        
-        # Finalizer to compile final output
-        with st.expander("Final Output"):
-            finalizer = Finalizer()
-            final_output = finalizer.compile_final_output("final_output")
-                    
-        # Download buttons
-        # Only display download buttons if there is content
-        if download_on and final_output:
-            st.balloons()
-            st.download_button(
-                label='Download full execution log',
-                data=execution_result,
-                file_name='execution_output.txt',
-                mime=None,
-            )
-            st.download_button(
-                label='Download Final output',
-                data=final_output,
-                file_name='final_output.txt',
-                mime=None,
-            )
+            if task_status_filter in ["All", "Pending"]:
+                execute_and_review_task(task, task_list)  # Execute and review each task
+                
+        # Finalization and download buttons
+        handle_finalization_and_downloads(download_on)
 
 if __name__ == "__main__":
     main()
