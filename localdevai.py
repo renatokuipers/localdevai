@@ -314,31 +314,32 @@ def execute_and_review_task(task, task_list):
     st.subheader(f"Task: {task.description}")
 
     # Expander for task executor
-    with st.expander(f"Executing Task: {task.description}"):
+    with st.expander(f"Executing Task: {task.description}", expanded=True):
         agent = TaskExecutor()
         with st.spinner("Executing task..."):
             execution_result = agent.execute_task(task, task_list, history)
 
     # Expander for first task reviewer
-    with st.expander(f"Reviewing Task: {task.description}"):
+    with st.expander(f"Reviewing Task: {task.description}", expanded=True):
         reviewer = TaskReviewer()
         review_result = reviewer.review_task(execution_result, task)
         satisfied = check_if_satisfied(review_result)
-
+        col1, col2 = st.columns(2)
         if not satisfied:
             st.warning("Task needs adjustment based on review feedback.")
             # Task improvement logic
             while not satisfied:
                 agent = TaskImprover()
-                with st.spinner("Improving task based on feedback..."):
-                    with st.container(border=True):
-                        execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
+                with col1:
+                    with st.spinner("Improving task based on feedback..."):
+                        with st.container(border=True):
+                            execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
                         
-
                 reviewer = TaskReviewer()
-                with st.spinner("Reviewing the improved task..."):
-                    with st.container(border=True):
-                        review_result = reviewer.review_task(execution_result, task)
+                with col2:
+                    with st.spinner("Reviewing the improved task..."):
+                        with st.container(border=True):
+                            review_result = reviewer.review_task(execution_result, task)
                 satisfied = check_if_satisfied(review_result)
 
                 if not satisfied:
@@ -378,15 +379,20 @@ def main():
         }
     )
     st.session_state.already_written = False  # Using session state
-    with st.sidebar.expander("Adjustable Settings"):
+    with st.sidebar.expander("Adjustable Settings", expanded=False):
         download_on = st.checkbox("Enable Download", False)
         st.divider()
         temperature = st.slider("Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, help=f"Lower values make the Agents more deterministic, meaning that that the Agents will be less creative.\nHigher values mean that the Agents will be more creative, with the possibility that the output will have lots of hallucinations.")
 
-    with st.sidebar.expander("Input"):
+    with st.sidebar.expander("Input", expanded=True):
         user_input = st.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
         st.divider()
         plan_tasks = st.button("Plan Tasks")
+
+    with st.sidebar.container(border=True)
+        # Task status in sidebar
+        st.sidebar.markdown("## Task Status")
+        task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"])
 
     # Planning phase
     if plan_tasks:
@@ -398,6 +404,7 @@ def main():
         task_list = TaskList()
         st.session_state["task_list"] = []  # Initialize task list in session state
 
+        
         for index, task_info in enumerate(task_list_json):
             task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
             task_list.add_task(task)
