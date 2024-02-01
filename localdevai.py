@@ -1,7 +1,6 @@
 import os
 import re
 import json
-from dotenv import load_dotenv
 from openai import OpenAI
 import streamlit as st
 
@@ -9,10 +8,10 @@ import streamlit as st
 MODEL_LOCAL = "local_model"
 API_KEY = "not-needed"  
 BASE_URL = "http://localhost:1234/v1"
+OPENAI_API_KEY = "empty_for_local_LLM"
 
 ### Initializations ###
 chat_client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
-load_dotenv()
 
 ### Global Variables ###
 history = ""
