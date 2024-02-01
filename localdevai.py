@@ -313,7 +313,8 @@ def handle_finalization_and_downloads(download_on):
 
 def execute_and_review_task(task, task_list):
     global already_written
-    st.sidebar.write(f"{task.description}")
+    st.sidebar.expander(f"## Current Task:", expanded=True):
+        st.write(f"{task.description}")
     st.subheader(f"Task: {task.description}")
 
     # Expander for task executor
@@ -321,12 +322,13 @@ def execute_and_review_task(task, task_list):
         agent = TaskExecutor()
         with st.spinner("Executing task..."):
             execution_result = agent.execute_task(task, task_list, history, temperature)
-
+            
     # Expander for first task reviewer
     with st.expander(f"Reviewing Task: {task.description}", expanded=True):
         reviewer = TaskReviewer()
         review_result = reviewer.review_task(execution_result, task, temperature)
         satisfied = check_if_satisfied(review_result)
+        
         col1, col2 = st.columns(2)
         if not satisfied:
             st.warning("Task needs adjustment based on review feedback.")
