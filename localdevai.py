@@ -20,6 +20,7 @@ temp_memory = ""
 user_input = ""
 agent_output = ""
 already_written = False
+temperature = 0.7
 
 ### System messages ###
 Custom_SystemMessage = ()
@@ -61,20 +62,20 @@ class TaskPlanner:
     def __init__(self, user_input):
         self.user_input = user_input
 
-    def generate_plan(self):
+    def generate_plan(self, temperature):
         print_section_header("Task Planning")
         history = [
             {"role": "system", "content": generate_ceo_system_message(self.user_input)},
             {"role": "user", "content": self.user_input}
         ]
         with st.chat_message("ai"):
-            plan = generate_response(history)
+            plan = generate_response(history, temperature)
         return parse_plan_to_json(plan)
 
 class TaskExecutor:
     """Class for executing tasks."""
 
-    def execute_task(self, task, task_list, history):
+    def execute_task(self, task, task_list, history, temperature):
         print_section_header(f"Task ID: {task.task_id}\nRole: {task.role}\nCurrent task: {task.description}")
         task_agent_message = generate_task_agent_system_message(
             str(task_list), history, task.role, task.description
@@ -83,13 +84,13 @@ class TaskExecutor:
             {"role": "system", "content": task_agent_message},
             {"role": "user", "content": task.description}
         ]
-        response = generate_response(history_update)
+        response = generate_response(history_update, temperature)
         return response
 
 class TaskImprover:
     """Class for improving its own output based on feedback"""
 
-    def execute_task(self, task, task_list, history, feedback, last_output):
+    def execute_task(self, task, task_list, history, feedback, last_output, temperature):
         print_section_header(f"Role: {task.role}\nImproving current task: {task.description}")
         task_agent_message = generate_task_improver_agent_system_message(
             str(task_list), history, task.role, task.description, feedback, last_output
@@ -98,33 +99,33 @@ class TaskImprover:
             {"role": "system", "content": task_agent_message},
             {"role": "user", "content": feedback}
         ]
-        response = generate_response(history_update)
+        response = generate_response(history_update, temperature)
         return response
 
 class TaskReviewer:
     """Class for reviewing task outputs."""
 
-    def review_task(self, output, task):
+    def review_task(self, output, task, temperature):
         print_section_header(f"Reviewing output...")
         reviewer_message = generate_reviewer_system_message(user_input, output, task)
         history = [
             {"role": "system", "content": reviewer_message},
             {"role": "user", "content": output}
         ]
-        response = generate_response(history)
+        response = generate_response(history, temperature)
         return response
 
 class Finalizer:
     """Class for compiling the final output."""
     
-    def compile_final_output(self, file_path):
+    def compile_final_output(self, file_path, temperature):
         print_section_header("Finalizing the answer...")
         content = read_from_file(file_path)
         history = [
             {"role": "system", "content": "You are a finalizer. Now, please create 1 single coherent output that uses ALL the content that is generated throughout the given content.(If the content is mainly code, show the full final code based on all the codesnippets. If the content is a story, write the full complete story based on all the content, If the content is a PRD, write the full PRD based on all the snippets, etc...). Here is the content:"},
             {"role": "user", "content": content}
         ]
-        response = generate_response(history)
+        response = generate_response(history, temperature)
         return response
 
 ### Functions ###
@@ -290,7 +291,7 @@ def handle_finalization_and_downloads(download_on):
     # Finalizer to compile final output
     with st.expander("Final Output"):
         finalizer = Finalizer()
-        final_output = finalizer.compile_final_output("final_output")
+        final_output = finalizer.compile_final_output("final_output", temperature)
 
     # Download buttons
     # Only display download buttons if there is content
@@ -318,12 +319,12 @@ def execute_and_review_task(task, task_list):
     with st.expander(f"Executing Task: {task.description}", expanded=True):
         agent = TaskExecutor()
         with st.spinner("Executing task..."):
-            execution_result = agent.execute_task(task, task_list, history)
+            execution_result = agent.execute_task(task, task_list, history, temperature)
 
     # Expander for first task reviewer
     with st.expander(f"Reviewing Task: {task.description}", expanded=True):
         reviewer = TaskReviewer()
-        review_result = reviewer.review_task(execution_result, task)
+        review_result = reviewer.review_task(execution_result, task, temperature)
         satisfied = check_if_satisfied(review_result)
         col1, col2 = st.columns(2)
         if not satisfied:
@@ -334,13 +335,13 @@ def execute_and_review_task(task, task_list):
                 with col1:
                     with st.spinner("Improving task based on feedback..."):
                         with st.container(border=True):
-                            execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
+                            execution_result = agent.execute_task(task, task_list, history, review_result, execution_result, temperature)
                         
                 reviewer = TaskReviewer()
                 with col2:
                     with st.spinner("Reviewing the improved task..."):
                         with st.container(border=True):
-                            review_result = reviewer.review_task(execution_result, task)
+                            review_result = reviewer.review_task(execution_result, task, temperature)
                 satisfied = check_if_satisfied(review_result)
 
                 if not satisfied:
@@ -354,7 +355,7 @@ def execute_and_review_task(task, task_list):
             already_written = True  # Update the flag after first write
 
 def main():
-    global already_written
+    global already_written, temperature
     st.set_page_config(
         page_title="Local Devai",
         page_icon=":clipboard:",
@@ -392,14 +393,15 @@ def main():
 
     with st.sidebar.container(border=True):
         # Task status in sidebar
-        st.sidebar.markdown("## Task Status")
         task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"])
+        st.divider()
+        st.sidebar.markdown("## Task Status")
 
     # Planning phase
     if plan_tasks:
         with st.expander(f"Task Planner"):
             with st.spinner("Generating task plan..."):
-                task_planner = TaskPlanner(user_input)
+                task_planner = TaskPlanner(user_input, temperature)
                 task_list_json = task_planner.generate_plan()
 
         task_list = TaskList()
