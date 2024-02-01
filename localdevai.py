@@ -331,7 +331,7 @@ def execute_and_review_task(task, task_list, current_task_expander):
             execution_result = agent.execute_task(task, task_list, history, temperature)
             
     # Expander for first task reviewer
-    with st.spinner("Reviewing the Agent output...")
+    with st.spinner("Reviewing the Agent output..."):
         with st.expander(f"Reviewing Task: {task.description}", expanded=True):
             reviewer = TaskReviewer()
             review_result = reviewer.review_task(execution_result, task, temperature)
