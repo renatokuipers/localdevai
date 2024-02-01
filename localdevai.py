@@ -331,11 +331,13 @@ def execute_and_review_task(task, task_list):
             while not satisfied:
                 agent = TaskImprover()
                 with st.spinner("Improving task based on feedback..."):
-                    execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
+                    with st.container():
+                        execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
 
                 reviewer = TaskReviewer()
                 with st.spinner("Reviewing the improved task..."):
-                    review_result = reviewer.review_task(execution_result, task)
+                    with st.container():
+                        review_result = reviewer.review_task(execution_result, task)
                 satisfied = check_if_satisfied(review_result)
 
                 if not satisfied:
