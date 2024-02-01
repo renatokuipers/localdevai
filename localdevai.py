@@ -394,9 +394,10 @@ def main():
 
     with st.sidebar.container(border=True):
         # Task status in sidebar
-        task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"])
+        task_status_filter = st.selectbox("Filter tasks by status", ["All", "Pending", "Completed"])
         st.divider()
-        st.sidebar.markdown("## Task Status")
+        st.markdown("# Task Status")
+        st.markdown(## Current Task:)
 
     # Planning phase
     if plan_tasks:
