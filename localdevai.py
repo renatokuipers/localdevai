@@ -336,12 +336,12 @@ def main():
                         file_name = 'execution_output.txt',
                         mime=None,
                     )
-                    st.download_button(
-                        label = 'Download Final output',
-                        data = final_output,
-                        file_name = 'final_output.txt',
-                        mime=None,
-                    )
+                st.download_button(
+                    label = 'Download Final output',
+                    data = final_output,
+                    file_name = 'final_output.txt',
+                    mime=None,
+                )
             else:
                 continue
 
