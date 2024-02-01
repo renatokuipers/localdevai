@@ -308,7 +308,7 @@ def main():
 
     st.title("Local Autonomous Development AI")
 
-    user_input = st.text_area("Tell the AI what it should make:")
+    user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
 
     if st.button("Plan Tasks", key="plan_button"):
         with st.spinner("Generating task plan..."):
