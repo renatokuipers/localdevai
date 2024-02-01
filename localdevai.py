@@ -389,7 +389,7 @@ def main():
         st.divider()
         plan_tasks = st.button("Plan Tasks")
 
-    with st.sidebar.container(border=True)
+    with st.sidebar.container(border=True):
         # Task status in sidebar
         st.sidebar.markdown("## Task Status")
         task_status_filter = st.sidebar.selectbox("Filter tasks by status", ["All", "Pending", "Completed"])
