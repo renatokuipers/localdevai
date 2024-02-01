@@ -34,6 +34,7 @@ class Task:
         self.description = description
         self.task_type = task_type
         self.role = role
+        self.completed = False
 
     def __str__(self):
         return f"ID: {self.task_id}, Description: {self.description}, Type: {self.task_type}, Role: {self.role}"
@@ -314,29 +315,19 @@ def handle_finalization_and_downloads(download_on):
 def execute_and_review_task(task, task_list, current_task_expander):
     global already_written
     
-    with current_task_expander:
-        st.markdown(f"### Current Task:\n- {task.description}")
-        st.markdown("### Completed Tasks:")
-        for completed_task in [t for t in task_list.tasks if t.completed]:
-            st.markdown(f"- {completed_task.description}")
-        else:
-            pass
-
     st.subheader(f"Task: {task.description}")
-
-    # Expander for task executor
+    
     with st.spinner("Executing task..."):
         agent = TaskExecutor()
         with st.expander(f"Executing Task: {task.description}", expanded=True):        
             execution_result = agent.execute_task(task, task_list, history, temperature)
             
-    # Expander for first task reviewer
     with st.spinner("Reviewing the Agent output..."):
         with st.expander(f"Reviewing Task: {task.description}", expanded=True):
             reviewer = TaskReviewer()
             review_result = reviewer.review_task(execution_result, task, temperature)
             satisfied = check_if_satisfied(review_result)
-        
+            
         col1, col2 = st.columns(2)
         if not satisfied:
             st.warning("Task needs adjustment based on review feedback.")
@@ -346,23 +337,26 @@ def execute_and_review_task(task, task_list, current_task_expander):
                     with st.spinner("Improving task based on feedback..."):
                         with st.container(border=True):
                             execution_result = agent.execute_task(task, task_list, history, review_result, execution_result, temperature)
-                        
                 reviewer = TaskReviewer()
                 with col2:
                     with st.spinner("Reviewing the improved task..."):
                         with st.container(border=True):
                             review_result = reviewer.review_task(execution_result, task, temperature)
                 satisfied = check_if_satisfied(review_result)
-
                 if not satisfied:
                     st.warning("Further adjustment needed based on feedback.")
                 else:
                     st.success("Task execution is satisfactory based on review.")
-
-        # Write to file if the task is satisfied
         if satisfied:
             write_to_file("execution_output", execution_result)
             already_written = True
+    task.completed = True
+
+    with current_task_expander:
+        st.markdown(f"### Current Task:\n- {task.description}")
+        st.markdown("### Completed Tasks:")
+        for completed_task in [t for t in task_list.tasks if t.completed]:
+            st.markdown(f"- {completed_task.description}")
 
 def main():
     global already_written, temperature
