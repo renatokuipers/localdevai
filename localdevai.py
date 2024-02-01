@@ -286,6 +286,17 @@ def check_if_satisfied(review_result):
         satisfied = True
     return satisfied
 
+def plan(user_input, download_on):
+    with st.expander("Planner", expanded=False):
+        with st.spinner("Generating task plan..."):
+            task_planner = TaskPlanner(user_input)
+            task_list_json = task_planner.generate_plan()
+    while not download_on:
+        if download_on:
+            st.balloons
+        else:
+            pass
+
 
 def main():
     global already_written
@@ -320,6 +331,8 @@ def main():
 
     with st.sidebar:
         user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
+        if st.button("Plan Tasks", key="plan_button"):
+            
         while not download_on:
             if download_on:
                 st.baloons()
@@ -337,21 +350,10 @@ def main():
                 )
             else:
                 pass
-        
-    st.header("The plan to be executed by the agents...")
+    with st.expander("Planner")
+        with st.spinner("Planning the actions...")
+            plan(user_input, download_on)
     
-    if st.button("Plan Tasks", key="plan_button"):
-        with st.expander("Planner", expanded=False):
-            with st.spinner("Generating task plan..."):
-                task_planner = TaskPlanner(user_input)
-                task_list_json = task_planner.generate_plan()
-        while not download_on:
-            if download_on:
-                st.balloons
-            else:
-                pass
-
-    st.header("All steps of development by the agents...")
     task_list = TaskList()
     for task_info in task_list_json:
         task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
@@ -394,12 +396,10 @@ def main():
     st.success("Task plan generated successfully!")
     download_on = True
         
-    st.header("The full log from the agents....")
     agent_output = read_from_file("execution_output.txt")
     st.write(agent_output)
     st.success("Final output has been written to a file called execution_output.txt")
     
-    st.header("The final output....")
     already_written = False
     with st.expander("Finalizer", expanded=True):
         with st.spinner("Finalizing the endresult..."):
