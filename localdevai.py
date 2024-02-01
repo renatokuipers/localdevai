@@ -350,9 +350,6 @@ def execute_and_review_task(task, task_list):
 
 def main():
     global already_written
-    download_on = st.sidebar.checkbox("Enable Download", False)
-    st.session_state.already_written = False  # Using session state
-    
     st.set_page_config(
         page_title="Local Devai",
         page_icon=":clipboard:",
@@ -377,6 +374,8 @@ def main():
             )
         }
     )
+    download_on = st.sidebar.checkbox("Enable Download", False)
+    st.session_state.already_written = False  # Using session state
 
     user_input = st.sidebar.text_area("Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
     plan_tasks = st.sidebar.button("Plan Tasks")
