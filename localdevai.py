@@ -324,8 +324,8 @@ def execute_and_review_task(task, task_list):
     with st.spinner("Reviewing Agent output..."):
         reviewer = TaskReviewer()
         with st.expander(f"Reviewing Task: {task.description}", expanded=True):
-        review_result = reviewer.review_task(execution_result, task, temperature)
-        satisfied = check_if_satisfied(review_result)
+            review_result = reviewer.review_task(execution_result, task, temperature)
+            satisfied = check_if_satisfied(review_result)
         
         col1, col2 = st.columns(2)
         if not satisfied:
