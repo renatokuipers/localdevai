@@ -345,25 +345,30 @@ def main():
     st.title("Local Autonomous Development AI")
 
     with st.sidebar:
-        user_input = st.text_area("What do you want?", placeholder="Tell the AI what it should make (Be as descriptive as possible)")
+        if 'user_input' not in st.session_state:
+            st.session_state.user_input = st.text_area("What do you want?", placeholder="Tell the AI what it should make (Be as descriptive as possible)")
+        else:
+            st.session_state.user_input = st.text_area("What do you want?", value=st.session_state.user_input, placeholder="Tell the AI what it should make (Be as descriptive as possible)")
+
         if st.button("Plan Tasks", key="plan_button"):
             with st.spinner("Planning the actions..."):
-                task_list_json = plan(user_input, download_on)
-                start_programming = True
+                st.session_state.task_list_json = plan(st.session_state.user_input, st.session_state.get('download_on', False))
+                st.session_state.start_programming = True
                 
-        on = st.toggle('Check if output files can be downloaded')
-        if on:
-            if not download_on:
-                st.write("Can't download")
-            else:
+        download_toggle = st.checkbox('Check if output files can be downloaded')
+        if download_toggle:
+            if st.session_state.get('download_on', False):
                 st.write("You can download the logfiles")
-                check_download(download_on)
+                check_download(st.session_state.download_on)
+            else:
+                st.write("Can't download")
     
-    if start_programming == True:
-        task_list = TaskList()
-        for task_info in task_list_json:
-            task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
-            task_list.add_task(task)
+    if st.session_state.get('start_programming', False):
+        if 'task_list' not in st.session_state:
+            st.session_state.task_list = TaskList()
+            for task_info in st.session_state.task_list_json:
+                task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
+                st.session_state.task_list.add_task(task)
     
         task_progress = []
         
@@ -400,7 +405,7 @@ def main():
             task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
     
         st.success("Task plan generated successfully!")
-        download_on = True
+        st.session_state.download_on = True
             
         agent_output = read_from_file("execution_output.txt")
         st.write(agent_output)
