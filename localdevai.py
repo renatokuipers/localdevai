@@ -378,7 +378,7 @@ def main():
             with st.expander("Task Executor", expanded=True):
                 agent = TaskExecutor()
                 with st.spinner("Executing task..."):
-                    execution_result = agent.execute_task(task, task_list, history)
+                    execution_result = agent.execute_task(task, st.session_state.task_list, history)
     
             with st.expander("Task Reviewer", expanded=True):
                 reviewer = TaskReviewer()
@@ -392,7 +392,7 @@ def main():
                     improve_container = st.container(border=True)
                     review_container = st.container(border=True)
                     with st.spinner("Improving task based on feedback..."):
-                        improve_container.write(execution_result = agent.execute_task(task, task_list, history, review_result, execution_result))
+                        improve_container.write(execution_result = agent.execute_task(task, st.session_state.task_list, history, review_result, execution_result))
                         
                     with st.spinner("Reviewing adjusted output..."):
                         review_container.write(review_result = reviewer.review_task(execution_result, task))
