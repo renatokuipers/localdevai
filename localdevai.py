@@ -331,13 +331,13 @@ def execute_and_review_task(task, task_list):
             while not satisfied:
                 agent = TaskImprover()
                 with st.spinner("Improving task based on feedback..."):
-                    with st.container():
+                    with st.container(border=True):
                         execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
                         
 
                 reviewer = TaskReviewer()
                 with st.spinner("Reviewing the improved task..."):
-                    with st.container():
+                    with st.container(border=True):
                         review_result = reviewer.review_task(execution_result, task)
                 satisfied = check_if_satisfied(review_result)
 
@@ -377,12 +377,16 @@ def main():
             )
         }
     )
-    download_on = st.sidebar.checkbox("Enable Download", False)
-    temperature = st.sidebar.slider("Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, help="Lower values make the agent more determinanistic, meaning that that the agent will be not so creative. Higher values mean that the Agent will be more creative, with possibility that the output will have lots of hallucications.")
     st.session_state.already_written = False  # Using session state
+    with st.sidebar.expander("Adjustable Settings"):
+        download_on = st.sidebar.checkbox("Enable Download", False)
+        st.divider()
+        temperature = st.sidebar.slider("Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, help=f"Lower values make the Agents more deterministic, meaning that that the Agents will be less creative.\nHigher values mean that the Agents will be more creative, with the possibility that the output will have lots of hallucinations.")
 
-    user_input = st.sidebar.text_area("Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
-    plan_tasks = st.sidebar.button("Plan Tasks")
+    with st.sidebar.expander("Input")
+        user_input = st.sidebar.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
+        st.divider()
+        plan_tasks = st.sidebar.button("Plan Tasks")
 
     # Task status in sidebar
     st.sidebar.markdown("## Task Status")
