@@ -128,7 +128,7 @@ class Finalizer:
         return response
 
 ### Functions ###
-def generate_response(messages, temperature=0.7):
+def generate_response(messages, temperature=temperature):
     """Generates a response using OpenAI's API."""
     
     stream = chat_client.chat.completions.create(
