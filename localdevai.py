@@ -325,21 +325,21 @@ def execute_and_review_task(task, task_list, current_task_expander):
     st.subheader(f"Task: {task.description}")
 
     # Expander for task executor
-    with st.expander(f"Executing Task: {task.description}", expanded=True):
+    with st.spinner("Executing task..."):
         agent = TaskExecutor()
-        with st.spinner("Executing task..."):
+        with st.expander(f"Executing Task: {task.description}", expanded=True):        
             execution_result = agent.execute_task(task, task_list, history, temperature)
             
     # Expander for first task reviewer
-    with st.expander(f"Reviewing Task: {task.description}", expanded=True):
-        reviewer = TaskReviewer()
-        review_result = reviewer.review_task(execution_result, task, temperature)
-        satisfied = check_if_satisfied(review_result)
+    with st.spinner("Reviewing the Agent output...")
+        with st.expander(f"Reviewing Task: {task.description}", expanded=True):
+            reviewer = TaskReviewer()
+            review_result = reviewer.review_task(execution_result, task, temperature)
+            satisfied = check_if_satisfied(review_result)
         
         col1, col2 = st.columns(2)
         if not satisfied:
             st.warning("Task needs adjustment based on review feedback.")
-            # Task improvement logic
             while not satisfied:
                 agent = TaskImprover()
                 with col1:
@@ -362,7 +362,7 @@ def execute_and_review_task(task, task_list, current_task_expander):
         # Write to file if the task is satisfied
         if satisfied:
             write_to_file("execution_output", execution_result)
-            already_written = True  # Update the flag after first write
+            already_written = True
 
 def main():
     global already_written, temperature
@@ -407,8 +407,8 @@ def main():
     
     # Planning phase
     if plan_tasks:
-        with st.expander(f"Task Planner"):
-            with st.spinner("Generating task plan..."):
+        with st.spinner("Generating task plan..."):
+            with st.expander(f"Task Planner"):
                 task_planner = TaskPlanner(user_input, temperature)
                 task_list_json = task_planner.generate_plan(temperature)
 
