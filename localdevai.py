@@ -1,10 +1,10 @@
 import os
+os.system("pip install openai")
+
 import re
 import json
 from openai import OpenAI
 import streamlit as st
-
-os.system("pip install openai")
 
 ### Constants ###
 MODEL_LOCAL = "local_model"
