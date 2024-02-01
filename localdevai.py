@@ -307,16 +307,17 @@ def check_download(download_on):
 def main():
     global already_written
     download_on = False
+    st.session_state.already_written = False  # Using session state
     
     st.set_page_config(
-        page_title="Local devai",
+        page_title="Local Devai",
         page_icon=":clipboard:",
         initial_sidebar_state="auto",
         layout = "wide",
         menu_items={
             "About": (
-                "## Local devai\n\n"
-                "Local devai is an AI-powered task planner and executor designed to autonomously generate the goal that the user inputs."
+                "## Local Devai\n\n"
+                "Local Devai is an AI-powered task planner and executor designed to autonomously generate the goal that the user inputs."
                 "With its intelligent agents, Local devai shows the user the task planning process, "
                 "shows a step-by-step execution process, and has internal reviews to "
                 "ensure tasks are completed successfully.\n\n"
@@ -324,7 +325,7 @@ def main():
                 "- Generate task plans based on user input\n"
                 "- Execute tasks with intelligent agents\n"
                 "- Review task outputs from agents for accuracy and completeness\n\n"
-                "Local devai simplifies complex workflows and empowers users to achieve their goals with a single input"
+                "Local Devai simplifies complex workflows and empowers users to achieve their goals with a single input"
                 "effectively. It can be seamlessly integrated with local Language Model (LLM) models "
                 "such as LM Studio, LlamaCPP, or oLlama, enabling users to leverage the power of "
                 "advanced language models for task planning and execution. Explore its capabilities "
@@ -335,20 +336,29 @@ def main():
 
     # Sidebar for user input and task planning
     with st.sidebar:
-        st.title("Task Planner")
-        user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
+        st.title("Local Devai")
+        user_input = st.text_area("Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
         plan_tasks = st.button("Plan Tasks")
 
-    # Main area for task execution and review
+        # Task status in sidebar
+        st.markdown("## Task Status")
+        for task in st.session_state.get("task_list", []):
+            status = "Completed" if task.get("completed", False) else "Pending"
+            st.markdown(f"- {task['description']}: **{status}**")
+
+    # planning phase
     if plan_tasks:
         with st.spinner("Generating task plan..."):
             task_planner = TaskPlanner(user_input)
             task_list_json = task_planner.generate_plan()
 
         task_list = TaskList()
+        st.session_state["task_list"] = []  # Initialize task list in session state
+
         for task_info in task_list_json:
             task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
             task_list.add_task(task)
+            st.session_state["task_list"].append({"description": task.description, "completed": False})
 
         task_progress = []
 
@@ -385,13 +395,21 @@ def main():
                         else:
                             st.success("Task execution is satisfactory based on review.")
 
+                # Write to file if the task is satisfied
+                if satisfied:
+                    write_to_file("execution_output", execution_result)
+                    already_written = True  # Update the flag after first write
+                    
             task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
-
+        
+        # Finalizer to compile final output
         with st.expander("Final Output"):
             finalizer = Finalizer()
-            final_output = finalizer.compile_final_output(task_progress)
+            final_output = finalizer.compile_final_output("final_output")
                     
-        if download_on:
+        # Download buttons
+        # Only display download buttons if there is content
+        if download_on and final_output:
             st.balloons()
             st.download_button(
                 label='Download full execution log',
