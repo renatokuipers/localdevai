@@ -287,15 +287,11 @@ def check_if_satisfied(review_result):
     return satisfied
 
 def plan(user_input, download_on):
-    with st.expander("Planner", expanded=False):
+    with st.expander("Planner", expanded=True):
         with st.spinner("Generating task plan..."):
             task_planner = TaskPlanner(user_input)
             task_list_json = task_planner.generate_plan()
-    while not download_on:
-        if download_on:
-            st.balloons
-        else:
-            pass
+            return task_list_json
 
 def check_download(download_on):
     if download_on:
@@ -351,7 +347,7 @@ def main():
         if st.button("Plan Tasks", key="plan_button"):
             with st.expander("Planner"):
                 with st.spinner("Planning the actions..."):
-                    plan(user_input, download_on)
+                    task_list_json = plan(user_input, download_on)
         on = st.toggle('Check if output files can be downloaded')
         if on:
             if not download_on:
