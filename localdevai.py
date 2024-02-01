@@ -348,9 +348,10 @@ def main():
 
     # planning phase
     if plan_tasks:
-        with st.spinner("Generating task plan..."):
-            task_planner = TaskPlanner(user_input)
-            task_list_json = task_planner.generate_plan()
+        with st.expander(f"Task Planner"):
+            with st.spinner("Generating task plan..."):
+                task_planner = TaskPlanner(user_input)
+                task_list_json = task_planner.generate_plan()
 
         task_list = TaskList()
         st.session_state["task_list"] = []  # Initialize task list in session state
