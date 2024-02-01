@@ -314,6 +314,7 @@ def check_download(download_on):
 def main():
     global already_written
     download_on = False
+    task_list_json = {}
     
     st.set_page_config(
         page_title="Local devai",
