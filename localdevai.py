@@ -1,27 +1,18 @@
 import os
 import re
 import json
-import colorama
-from colorama import Fore, Style
 from dotenv import load_dotenv
 from openai import OpenAI
 import streamlit as st
 
 ### Constants ###
 MODEL_LOCAL = "local_model"
-API_KEY = "not-needed"
+API_KEY = "not-needed"  
 BASE_URL = "http://localhost:1234/v1"
-USER_COLOR = Fore.MAGENTA
-REVIEW_COLOR = Fore.YELLOW
-AGENT_COLOR = Fore.CYAN
-PLANNER_COLOR = Fore.BLUE
-ADJUSTMENT = Fore.RED
-SATISFIED = Fore.GREEN
 
 ### Initializations ###
 chat_client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
 load_dotenv()
-colorama.init(autoreset=True)
 
 ### Global Variables ###
 history = ""
@@ -70,7 +61,7 @@ class TaskPlanner:
         self.user_input = user_input
 
     def generate_plan(self):
-        print_section_header("Task Planning", PLANNER_COLOR)
+        print_section_header("Task Planning")
         history = [
             {"role": "system", "content": generate_ceo_system_message(self.user_input)},
             {"role": "user", "content": self.user_input}
@@ -83,7 +74,7 @@ class TaskExecutor:
     """Class for executing tasks."""
 
     def execute_task(self, task, task_list, history):
-        print_section_header(f"Task ID: {task.task_id}\nRole: {task.role}\nCurrent task: {task.description}", AGENT_COLOR)
+        print_section_header(f"Task ID: {task.task_id}\nRole: {task.role}\nCurrent task: {task.description}")
         task_agent_message = generate_task_agent_system_message(
             str(task_list), history, task.role, task.description
         )
@@ -98,7 +89,7 @@ class TaskImprover:
     """Class for improving its own output based on feedback"""
 
     def execute_task(self, task, task_list, history, feedback, last_output):
-        print_section_header(f"Role: {task.role}\nImproving current task: {task.description}", AGENT_COLOR)
+        print_section_header(f"Role: {task.role}\nImproving current task: {task.description}")
         task_agent_message = generate_task_improver_agent_system_message(
             str(task_list), history, task.role, task.description, feedback, last_output
         )
@@ -113,7 +104,7 @@ class TaskReviewer:
     """Class for reviewing task outputs."""
 
     def review_task(self, output, task):
-        print_section_header(f"Reviewing output...", REVIEW_COLOR)
+        print_section_header(f"Reviewing output...")
         reviewer_message = generate_reviewer_system_message(user_input, output, task)
         history = [
             {"role": "system", "content": reviewer_message},
@@ -126,7 +117,7 @@ class Finalizer:
     """Class for compiling the final output."""
     
     def compile_final_output(self, file_path):
-        print_section_header("Finalizing the answer...", AGENT_COLOR)
+        print_section_header("Finalizing the answer...")
         with open(file_path, 'r', encoding='utf-8') as file:
             content = file.read()
         history = [
@@ -254,7 +245,7 @@ def get_user_goal():
     
     goal = input("What is your goal? ")
     os.system("cls")
-    print_section_header('Main Goal:', USER_COLOR)
+    print_section_header('Main Goal:')
     print(goal)
     return goal
 
@@ -264,11 +255,11 @@ def write_to_file(file_path, text):
     with open(file_path, 'a', encoding='utf-8') as file:
         file.write(text + "\n")
 
-def print_section_header(title, color):
+def print_section_header(title):
     """Prints a section header with a specific color."""
     
     print(f"\n{'#' * 60}")
-    print(f"{color}{title}{Style.RESET_ALL}")
+    print(f"{title}")
     print(f"{'#' * 60}\n")
 
 def print_section_footer():
