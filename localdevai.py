@@ -311,6 +311,7 @@ def handle_finalization_and_downloads(download_on):
 
 def execute_and_review_task(task, task_list):
     global already_written
+    st.sidebar.write(f"{task.description}")
     st.subheader(f"Task: {task.description}")
 
     # Expander for task executor
