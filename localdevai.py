@@ -333,6 +333,7 @@ def execute_and_review_task(task, task_list):
                 with st.spinner("Improving task based on feedback..."):
                     with st.container():
                         execution_result = agent.execute_task(task, task_list, history, review_result, execution_result)
+                        
 
                 reviewer = TaskReviewer()
                 with st.spinner("Reviewing the improved task..."):
@@ -377,6 +378,7 @@ def main():
         }
     )
     download_on = st.sidebar.checkbox("Enable Download", False)
+    temperature = st.sidebar.slider("Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, help="Lower values make the agent more determinanistic, meaning that that the agent will be not so creative. Higher values mean that the Agent will be more creative, with possibility that the output will have lots of hallucications.")
     st.session_state.already_written = False  # Using session state
 
     user_input = st.sidebar.text_area("Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
