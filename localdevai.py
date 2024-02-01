@@ -320,9 +320,28 @@ def main():
 
     st.title("Local Autonomous Development AI")
 
+    with st.sidebar:
+        while not download_on:
+            if download_on:
+                st.baloons()
+                st.download_button(
+                        label = 'Download full execution log',
+                        data = execution_result,
+                        file_name = 'execution_output.txt',
+                        mime=None,
+                    )
+                st.download_button(
+                    label = 'Download Final output',
+                    data = final_output,
+                    file_name = 'final_output.txt',
+                    mime=None,
+                )
+            else:
+                pass
+        user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
+        
     with tab1:
         st.header("The plan to be executed by the agents...")
-        user_input = st.text_area("Tell the AI what it should make (Be as descriptive as possible):")
         
         if st.button("Plan Tasks", key="plan_button"):
             with st.expander("Planner", expanded=False):
@@ -332,18 +351,6 @@ def main():
             while not download_on:
                 if download_on:
                     st.balloons
-                    st.download_button(
-                            label = 'Download full execution log',
-                            data = execution_result,
-                            file_name = 'execution_output.txt',
-                            mime=None,
-                        )
-                    st.download_button(
-                        label = 'Download Final output',
-                        data = final_output,
-                        file_name = 'final_output.txt',
-                        mime=None,
-                    )
                 else:
                     pass
 
@@ -397,11 +404,13 @@ def main():
         st.header("The full log from the agents....")
         agent_output = read_from_file("execution_output.txt")
         st.write(agent_output)
-        if download_on:
-            st.balloons()
-        else:
-            continue
-
+        st.success("Final output has been written to a file called execution_output.txt")
+        while not download_on:
+            if download_on:
+                st.baloons()
+            else:
+                pass
+    
     with tab4:
         st.header("The final output....")
         already_written = False
@@ -412,6 +421,11 @@ def main():
                 write_to_file("final_output.txt", final_output)
 
         st.success("Final output has been written to a file called final_output.txt")
-    
+        while not download_on:
+            if download_on:
+                st.baloons()
+            else:
+                pass
+                
 if __name__ == "__main__":
     main()
