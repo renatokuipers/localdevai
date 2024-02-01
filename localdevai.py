@@ -403,7 +403,7 @@ def main():
         with st.expander(f"Task Planner"):
             with st.spinner("Generating task plan..."):
                 task_planner = TaskPlanner(user_input, temperature)
-                task_list_json = task_planner.generate_plan()
+                task_list_json = task_planner.generate_plan(temperature)
 
         task_list = TaskList()
         st.session_state["task_list"] = []  # Initialize task list in session state
