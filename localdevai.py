@@ -319,6 +319,8 @@ def execute_and_review_task(task, task_list, current_task_expander):
         st.markdown("### Completed Tasks:")
         for completed_task in [t for t in task_list.tasks if t.completed]:
             st.markdown(f"- {completed_task.description}")
+        else:
+            pass
 
     st.subheader(f"Task: {task.description}")
 
