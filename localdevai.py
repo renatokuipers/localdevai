@@ -321,7 +321,7 @@ def main():
             task_list.add_task(task)
 
         task_progress = []
-
+        
         for task in task_list.tasks:
             st.subheader(f"Task: {task.description}")
 
@@ -347,6 +347,7 @@ def main():
                     satisfied = check_if_satisfied(review_result)
 
                 st.success("Task execution is satisfactory based on review.")
+                write_to_file("execution_output.txt", execution_result)
 
             task_progress.append(f"Result for task: {task.description}\n######################################\n\n{execution_result}\n######################################\n\n")
 
@@ -355,7 +356,24 @@ def main():
         with st.expander("Finalizer"):
             with st.spinner("Finalizing the endresult..."):
                 finalizer = Finalizer()
-                final_output = finalizer.compile_final_output(task_progress)
+                final_output = finalizer.compile_final_output("execution_output.txt")
+                write_to_file("final_output.txt", final_output)
 
+        st.empty()
+        st.balloons()
+        st.success("Final output has been written to a file called final_output.txt")
+        st.download_button(
+            label = 'Download full execution log',
+            data = execution_result,
+            file_name = 'execution_output.txt',
+            mime=None,
+        )
+        st.download_button(
+            label = 'Download Final output',
+            data = final_output,
+            file_name = 'final_output.txt',
+            mime=None,
+        )
+    
 if __name__ == "__main__":
     main()
