@@ -34,9 +34,6 @@ if 'temperature' not in st.session_state:
 if 'current_output' not in st.session_state:
     st.session_state['current_output'] = ""
 
-### System messages ###
-Custom_SystemMessage = ()
-
 ### Classes ###
 class Task:
     """Class representing a task."""
@@ -223,7 +220,7 @@ def generate_response(messages, temperature):
         if chunk.choices[0].delta.content is not None:
             print(chunk.choices[0].delta.content, end="", flush=True)
             response += chunk.choices[0].delta.content
-            response_container.write(response)
+            response_container.write_stream(response)
     st.write("\n")
     return response
 
@@ -403,6 +400,8 @@ def split_history_into_chunks(max_chunk_size=2000, overlap_size=400):
 def execute_and_review_task(task, task_list):
     st.session_state['current_output'] = ""
     satisfied = False
+    placeholder_comp_tasks = st.empty()
+    placeholder_comp_tasks = st.sidebar()
 
     if 'completed_tasks' not in st.session_state:
         st.session_state['completed_tasks'] = []
@@ -438,7 +437,7 @@ def execute_and_review_task(task, task_list):
                     st.session_state['history'] += f"\n{st.session_state['current_output']}"
                     write_to_file("execution_output.txt", st.session_state['current_output'])
                     st.session_state['completed_tasks'].append(task.description)
-                    with st.sidebar.expander("## Completed Tasks:", expanded=True, key="completed_tasks"):
+                    with placeholder_comp_tasks.expander("## Completed Tasks:", expanded=True):
                         for completed_task in st.session_state['completed_tasks']:
                             st.write(f"{completed_task}")
 
