@@ -33,6 +33,8 @@ if 'temperature' not in st.session_state:
     st.session_state['temperature'] = 0.7
 if 'current_output' not in st.session_state:
     st.session_state['current_output'] = ""
+if 'completed_tasks' not in st.session_state:
+    st.session_state['completed_tasks'] = []
 
 ### Classes ###
 class Task:
@@ -402,20 +404,17 @@ def execute_and_review_task(task, task_list):
     satisfied = False
     # sidebar current task
     placeholder_cur_task = st.empty()
-    placeholder_cur_task = st.sidebar()
+    placeholder_cur_task = st.sidebar.expander("## Current Task: ", expanded=True)
 
     # sidebar completed tasks
     placeholder_comp_tasks = st.empty()
-    placeholder_comp_tasks = st.sidebar()
+    placeholder_comp_tasks = st.sidebar.expander("## Completed tasks: ", expanded=True)
 
-    if 'completed_tasks' not in st.session_state:
-        st.session_state['completed_tasks'] = []
-
-    with placeholder_cur_task.expander("## Current Task:", expanded=True):
+    with placeholder_cur_task:
         st.write(f"{task.description}")
 
     if st.session_state['completed_tasks']:
-        with st.sidebar.expander("## Completed Tasks:", expanded=True):
+        with placeholder_comp_tasks:
             for completed_task in st.session_state['completed_tasks']:
                 st.write(f"{completed_task}")
     
@@ -442,7 +441,7 @@ def execute_and_review_task(task, task_list):
                     st.session_state['history'] += f"\n{st.session_state['current_output']}"
                     write_to_file("execution_output.txt", st.session_state['current_output'])
                     st.session_state['completed_tasks'].append(task.description)
-                    with placeholder_comp_tasks.expander("## Completed Tasks:", expanded=True):
+                    with placeholder_comp_tasks:
                         for completed_task in st.session_state['completed_tasks']:
                             st.write(f"{completed_task}")
 
