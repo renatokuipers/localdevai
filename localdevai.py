@@ -438,7 +438,7 @@ def execute_and_review_task(task, task_list):
                     st.session_state['history'] += f"\n{st.session_state['current_output']}"
                     write_to_file("execution_output.txt", st.session_state['current_output'])
                     st.session_state['completed_tasks'].append(task.description)
-                    with st.sidebar.expander("## Completed Tasks:", expanded=True):
+                    with st.sidebar.expander("## Completed Tasks:", expanded=True, key="completed_tasks"):
                         for completed_task in st.session_state['completed_tasks']:
                             st.write(f"{completed_task}")
 
@@ -471,6 +471,11 @@ def main():
     )
     st.sidebar.header("Localdevai by Renjestoo.")
     st.session_state.already_written = False
+    
+    if st.sidebar.button('Clear Session and Start Over'):
+        st.session_state.clear()
+        st.rerun()
+        
     with st.sidebar.expander("Adjustable Settings", expanded=False):
         download_on = st.checkbox("Enable Download", False)
         st.divider()
@@ -500,10 +505,6 @@ def main():
             output = execute_and_review_task(task, task_list)
                 
         handle_finalization_and_downloads(download_on, output)
-
-    if st.sidebar.button('Clear Session and Start Over'):
-        st.session_state.clear()
-        st.rerun()
 
 if __name__ == "__main__":
     main()
