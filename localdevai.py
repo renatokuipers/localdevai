@@ -222,7 +222,7 @@ def generate_response(messages, temperature):
         if chunk.choices[0].delta.content is not None:
             print(chunk.choices[0].delta.content, end="", flush=True)
             response += chunk.choices[0].delta.content
-            response_container.write_stream(response)
+            response_container.write(response)
     st.write("\n")
     return response
 
