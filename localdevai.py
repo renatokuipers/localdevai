@@ -400,13 +400,18 @@ def split_history_into_chunks(max_chunk_size=2000, overlap_size=400):
 def execute_and_review_task(task, task_list):
     st.session_state['current_output'] = ""
     satisfied = False
+    # sidebar current task
+    placeholder_cur_task = st.empty()
+    placeholder_cur_task = st.sidebar()
+
+    # sidebar completed tasks
     placeholder_comp_tasks = st.empty()
     placeholder_comp_tasks = st.sidebar()
 
     if 'completed_tasks' not in st.session_state:
         st.session_state['completed_tasks'] = []
 
-    with st.sidebar.expander("## Current Task:", expanded=True):
+    with placeholder_cur_task.expander("## Current Task:", expanded=True):
         st.write(f"{task.description}")
 
     if st.session_state['completed_tasks']:
