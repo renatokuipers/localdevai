@@ -714,19 +714,6 @@ def handle_finalization_and_downloads(download_on, execution_result, Finalizatio
                 final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
                 write_to_file("final_output.txt", final_output)
 
-    if download_on and final_output:
-        st.balloons()
-        st.download_button(
-            label='Download full execution log',
-            data=execution_result,
-            file_name='execution_output.txt'
-        )
-        st.download_button(
-            label='Download Final output',
-            data=final_output,
-            file_name='final_output.txt'
-        )
-
 def split_history_into_chunks(max_chunk_size=2000, overlap_size=400):
     if not st.session_state['history'] or max_chunk_size <= overlap_size:
         return st.session_state['history']
@@ -890,7 +877,7 @@ def sidebar_setup():
 
 def handle_adjustable_settings_and_input():
     with st.sidebar.expander("Adjustable Settings", expanded=False):
-        download_on = st.checkbox(label="Enable Download", value=False, disabled=False, key="download_on", help="When enabled, in the end, you will have the option to download the full log of the agents and the final output.")
+        #download_on = st.checkbox(label="Enable Download", value=False, disabled=False, key="download_on", help="When enabled, in the end, you will have the option to download the full log of the agents and the final output.")
         st.session_state['temperature'] = st.slider(label="Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, key="Temperature", help="A lower value makes the program more deterministic, while a higher value will make it more creative")
         st.session_state['action_amount1'] = st.slider(label="How many tasks should the planner make?", min_value=3, max_value=15, value=5, step=1, key="Task Amount", help="This determines how many tasks there will be in the taskplan.")
         secondary_tasks = st.checkbox(label="Secondary tasks", value=False, key="secondary_task_plan", help="When enabled, the program wil create subtasks for each task in the taskplan and will execute these subtasks sequentially")
@@ -908,7 +895,8 @@ def handle_adjustable_settings_and_input():
         plan_tasks = st.button("Plan Tasks")
         st.session_state['pressed_submit'] = plan_tasks
 
-    return download_on, secondary_tasks, action_amount2, st.session_state['user_input'], plan_tasks
+    #return download_on, secondary_tasks, action_amount2, st.session_state['user_input'], plan_tasks
+    return secondary_tasks, action_amount2, st.session_state['user_input'], plan_tasks
 
 def plan_primary_tasks(user_input, temperature):
     st.header("Planning: ")
@@ -964,8 +952,7 @@ def execute_and_review_tasks(task_list_json, executing, reviewing, Execution, Fi
         st.session_state["task_list"].append({"description": task.description, "completed": False})
         output = execute_and_review_task(task, task_list, executing, reviewing, Execution, Finalization)
         st.session_state['output'] = output
-        placeholder_currenttask = st.empty()
-        placeholder_currenttask = st.sidebar.container(border=True)
+        placeholder_currenttask.empty()
     st.session_state['all_tasks_done'] = True
 
 def execute_and_review_subtasks(task_list_json, executing, reviewing, planning, Execution, Finalization):
@@ -974,22 +961,20 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing, planning, 
     placeholder_currenttask = st.empty()
     placeholder_currenttask = st.sidebar.container(border=True)
 
-    with placeholder_currenttask:
-        for main_task_index, main_task_info in enumerate(task_list_json):
-            planning.write(f"Processing Main Task: {main_task_info['ID']} - {main_task_info['Description']}")
-            if 'subtasks' in main_task_info and main_task_info['subtasks']:
-                for subtask_index, subtask_info in enumerate(main_task_info['subtasks']):
-                    st.write(f"Executing Subtask: {subtask_info['ID']}")
-                    st.write(f"{subtask_info['Description']}")
-                    st.write(f"")
-                    subtask = Task(subtask_info['ID'], subtask_info['Description'], subtask_info['Type'], subtask_info['Role'])
-                    task_list2.add_task(subtask)
-                    st.session_state["task_list2"].append({"description": subtask.description, "completed": False})
-                    output = execute_and_review_subtask(subtask, task_list2, executing, reviewing, Execution, Finalization)
-                    st.session_state['output'] = output
-                    placeholder_currenttask = st.empty()
-                    placeholder_currenttask = st.sidebar.container(border=True) 
-        st.session_state['all_tasks_done'] = True
+    for main_task_index, main_task_info in enumerate(task_list_json):
+        planning.write(f"Processing Main Task: {main_task_info['ID']} - {main_task_info['Description']}")
+        if 'subtasks' in main_task_info and main_task_info['subtasks']:
+            for subtask_index, subtask_info in enumerate(main_task_info['subtasks']):
+                placeholder_currenttask.write(f"Executing Subtask: {subtask_info['ID']}")
+                placeholder_currenttask.write(f"{subtask_info['Description']}")
+                placeholder_currenttask.write(f"")
+                subtask = Task(subtask_info['ID'], subtask_info['Description'], subtask_info['Type'], subtask_info['Role'])
+                task_list2.add_task(subtask)
+                st.session_state["task_list2"].append({"description": subtask.description, "completed": False})
+                output = execute_and_review_subtask(subtask, task_list2, executing, reviewing, Execution, Finalization)
+                st.session_state['output'] = output
+                placeholder_currenttask.empty()
+    st.session_state['all_tasks_done'] = True
 
 def main():
     initialize_streamlit_ui()
