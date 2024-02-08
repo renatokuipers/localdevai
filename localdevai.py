@@ -34,7 +34,7 @@ if 'agent_output' not in st.session_state:
 if 'already_written' not in st.session_state:
     st.session_state['already_written'] = False
 if 'temperature' not in st.session_state:
-    temperature = 0.7
+    st.session_state['temperature'] = 0.7
 if 'current_output' not in st.session_state:
     st.session_state['current_output'] = ""
 if 'completed_tasks' not in st.session_state:
@@ -377,7 +377,7 @@ def generate_ceo_system_message(input_text, action_amount1):
     """Generates CEO system message based on user input."""
 
     return (f"""
-            Your objective is to create a focused, actionable plan that directly addresses the goal: '{input_text}'. 
+            Your objective is to create a focused, actionable plan that directly addresses the goal: '{st.session_state['user_input']}'. 
             This plan should outline up to {action_amount1} specific actions needed to achieve the goal, with each action being critical to the project's success. 
             These actions should be directly tied to the creation or development of the final output, ensuring a clear path to achieving the user's stated objective.
 
@@ -404,7 +404,7 @@ def generate_subtask_planner_system_message(task_description, user_input, action
     """Generates Subtask Planner system message."""
     
     return (
-        f"Based on the goal: '{task_description}', generate a step-by-step plan for developing the goal. "
+        f"Based on the goal: '{st.session_state['current_task']}', generate a step-by-step plan for developing the goal. "
         f"The plan should include a series at a maximum of {action_amount2} subtasks, each clearly defined to contribute towards achieving this goal and in the correct order of execution. "
         "For each subtasks, STRICTLY AND ONLY provide the list in the following format and nothing else: \n"
         "```\n"
@@ -413,7 +413,7 @@ def generate_subtask_planner_system_message(task_description, user_input, action
         "- Type: Specify the category of the task.\n"
         "- Role: A role responsible for completing the task (should be a role for an agent).\n"
         "```\n"
-        f"This is the overall goal: '{user_input}'"
+        f"This is the overall goal: '{st.session_state['user_input']}'"
     )
 
 
@@ -435,12 +435,12 @@ def generate_task_agent_system_message(tasklist, history, task_role, task_descri
 
             3. Previous Actions: A summary of actions previously taken, helping you understand the progression towards the overall goal.
             ```
-            {history}
+            {st.session_state['history']}
             ```
 
             4. Your Current Role: '{task_role}'. It defines your responsibilities and the scope of your actions.
 
-            5. Your Current Task: '{task_description}'. This is the specific task you need to focus on and execute to the best of your abilities.
+            5. Your Current Task: '{st.session_state['current_task']}'. This is the specific task you need to focus on and execute to the best of your abilities.
 
             Execution Guidelines:
             - Base your actions on the overall goal and, more importantly, on the specifics of your current task. It's crucial that your execution aligns closely with the task's requirements.
@@ -470,10 +470,10 @@ def generate_coding_task_agent_system_message(tasklist, history, task_role, task
 
             3. Development History: A log of previous coding efforts and commits, offering insights into the project's evolution and current state.
             ```
-            {history}
+            {st.session_state['history']}
             ```
 
-            4. Your Coding Task: '{task_description}'. The specific functionality or feature you are tasked to implement or improve, with a focus on writing clean, efficient, and bug-free code.
+            4. Your Coding Task: '{st.session_state['current_task']}'. The specific functionality or feature you are tasked to implement or improve, with a focus on writing clean, efficient, and bug-free code.
 
             Coding Guidelines:
             - Ensure your code aligns with the project's overall objective and directly contributes to achieving it, paying close attention to the specifics of your assigned task.
@@ -498,17 +498,17 @@ def generate_task_improver_agent_system_message(tasklist, history, task_role, ta
 
             2. Previous Actions (For reviewing the progression towards the overall goal to inform your improvements.)
             ```
-            {history}
+            {st.session_state['history']}
             ```
 
             3. Your Last Output (For reflecting on your previous submission to understand the starting point for improvements.)
             ```
-            {last_output}
+            {st.session_state['current_output']}
             ```
 
             4. Your Current Role: '{task_role}'. (This role defines your specific focus on improving the existing output.)
 
-            5. Your Current Task: '{task_description}'. (This describes what aspect of your last output needs refinement or expansion.)
+            5. Your Current Task: '{st.session_state['current_task']}'. (This describes what aspect of your last output needs refinement or expansion.)
 
             6. Feedback (Utilize this targeted feedback to guide your improvements.)
             ```
@@ -537,15 +537,15 @@ def generate_coding_task_improver_agent_system_message(tasklist, history, task_r
 
             2. Development History: Review the coding efforts and milestones achieved so far to contextualize your improvements.
             ```
-            {history}
+            {st.session_state['history']}
             ```
 
             3. Your Last Output: Reflect on the code you previously submitted to identify the basis for your enhancements.
             ```
-            {last_output}
+            {st.session_state['current_output']}
             ```
 
-            4. Improvement Task: '{task_description}'. Specifies the enhancements, optimizations, or bug fixes you are to implement in your code.
+            4. Improvement Task: '{st.session_state['current_task']}'. Specifies the enhancements, optimizations, or bug fixes you are to implement in your code.
 
             5. Feedback: Use this detailed feedback to precisely target your code improvements.
             ```
@@ -571,7 +571,7 @@ def generate_reviewer_system_message(user_input, agent_output, task):
             Provided Context for Your Review:
             - User's Overall Goal: Understand the user's ultimate objective to ensure the output aligns with achieving this goal.
             ```
-            {user_input}
+            {st.session_state['user_input']}
             ```
             - Specific Task Objective: This is what the agent aimed to accomplish in response to the user's request.
             ```
@@ -579,7 +579,7 @@ def generate_reviewer_system_message(user_input, agent_output, task):
             ```
             - Agent's Output for Review: This is the content you need to critically evaluate.
             ```
-            {agent_output}
+            {st.session_state['current_output']}
             ```
 
             Feedback Protocol:
@@ -609,7 +609,7 @@ def generate_coding_reviewer_feedback(user_input, agent_output, task_description
 
             - User’s Objective: Gauge whether the code fulfills the user's intended purpose, keeping their ultimate goal in mind.
             ```
-            {user_input}
+            {st.session_state['user_input']}
             ```
             - Task Description: Reflect on the specific coding task the agent was supposed to accomplish, ensuring the output is a direct response to this.
             ```
@@ -617,7 +617,7 @@ def generate_coding_reviewer_feedback(user_input, agent_output, task_description
             ```
             - Agent’s Coding Output: Analyze the provided code to assess its effectiveness in meeting the task and user’s needs.
             ```
-            {agent_output}
+            {st.session_state['current_output']}
             ```
 
             Feedback Guidelines:
