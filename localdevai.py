@@ -55,6 +55,8 @@ if 'task_list2' not in st.session_state:
     st.session_state["task_list2"] = []
 if 'task_list' not in st.session_state:    
     st.session_state["task_list"] = []
+if 'coding_task' not in st.session_state:
+    st.session_state['coding_task'] = False
 
 ### Classes ###
 class Task:
@@ -218,9 +220,14 @@ class TaskExecutor:
             return stored_output
         else:
             print_section_header(f"Task ID: {task.task_id}\nRole: {task.role}\nCurrent task: {task.description}")
-            task_agent_message = generate_task_agent_system_message(
-                str(task_list), history, task.role, task.description
-            )
+            if st.session_state['coding_enabled'] == True:
+                task_agent_message = generate_task_agent_system_message(
+                    str(task_list), history, task.role, task.description
+                )
+            else:
+                task_agent_message = generate_coding_task_agent_system_message(
+                    str(task_list), history, task.role, task.description
+                )
             history_update = [
                 {"role": "system", "content": task_agent_message},
                 {"role": "user", "content": "Please proceed to execute your assigned task with the guidance provided. It's imperative to closely follow the outlined instructions and criteria to ensure your work contributes effectively to the overall goal. Remember, the quality of your execution is crucial. Let's aim for excellence in completing your task."}
@@ -251,9 +258,14 @@ class TaskImprover:
 
     def execute_task(self, task, task_list, history, feedback, last_output, temperature):
         print_section_header(f"Role: {task.role}\nImproving current task: {task.description}")
-        task_agent_message = generate_task_improver_agent_system_message(
-            str(task_list), history, task.role, task.description, feedback, last_output
-        )
+        if st.session_state['coding_enabled'] == True:
+            task_agent_message = generate_task_improver_agent_system_message(
+                str(task_list), history, task.role, task.description, feedback, last_output
+            )
+        else:
+            task_agent_message = generate_coding_task_improver_agent_system_message(
+                str(task_list), history, task.role, task.description, feedback, last_output
+            )
         history_update = [
             {"role": "system", "content": task_agent_message},
             {"role": "user", "content": "Now, it's time to revise, refine, and enhance your last output, taking into account the specific feedback provided. This feedback is crucial for improving the quality and effectiveness of your work. Please carefully incorporate the suggestions to ensure your updated output fully aligns with the expectations."}
@@ -268,7 +280,10 @@ class TaskReviewer:
 
     def review_task(self, output, task, temperature):
         print_section_header(f"Reviewing output...")
-        reviewer_message = generate_reviewer_system_message(st.session_state['user_input'], output, task)
+        if st.session_state['coding_enabled'] == True:
+            reviewer_message = generate_reviewer_system_message(st.session_state['user_input'], output, task)
+        else:
+            reviewer_message = generate_coding_reviewer_feedback(st.session_state['user_input'], output, task)
         history = [
             {"role": "system", "content": reviewer_message},
             {"role": "user", "content": "Please proceed to provide your feedback based on the guidelines outlined mentioned before. It's crucial to strictly follow these rules to ensure the feedback is constructive and aligns with the evaluation criteria. Your insights are valuable to us, so please be thorough and precise in your assessment."}
@@ -399,6 +414,7 @@ def generate_subtask_planner_system_message(task_description, user_input, action
         f"This is the overall goal: '{user_input}'"
     )
 
+
 def generate_task_agent_system_message(tasklist, history, task_role, task_description):
     """Generates Task Agent system message."""
 
@@ -433,6 +449,39 @@ def generate_task_agent_system_message(tasklist, history, task_role, task_descri
             Execute your task with attention to detail and a commitment to quality.
             """
     )
+
+def generate_coding_task_agent_system_message(tasklist, history, task_role, task_description):
+    """Generates a system message focused on coding/programming tasks."""
+
+    return (f"""
+            As a developer, your coding expertise is crucial for the success of our project. Here's the detailed briefing to guide your development process:
+
+            1. Project Objective: The final goal we aim to achieve with our code.
+            ```
+            {st.session_state['user_input']}
+            ```
+
+            2. Task Breakdown: A detailed enumeration of all programming tasks, helping you understand how your coding task fits into the broader project.
+            ```
+            {tasklist}
+            ```
+
+            3. Development History: A log of previous coding efforts and commits, offering insights into the project's evolution and current state.
+            ```
+            {history}
+            ```
+
+            4. Your Coding Task: '{task_description}'. The specific functionality or feature you are tasked to implement or improve, with a focus on writing clean, efficient, and bug-free code.
+
+            Coding Guidelines:
+            - Ensure your code aligns with the project's overall objective and directly contributes to achieving it, paying close attention to the specifics of your assigned task.
+            - Write complete and functional code, avoiding placeholders or incomplete implementations. Your code should be ready for integration into the project's codebase.
+            - Maintain code quality by following best practices, including clear documentation, adherence to coding standards, and thorough testing to minimize bugs and ensure reliability.
+
+            Your technical skills are key to advancing our project. Approach your task with precision and a commitment to crafting high-quality code.
+            """
+    )
+
 
 def generate_task_improver_agent_system_message(tasklist, history, task_role, task_description, feedback, last_output):
     """Generates Task Improver Agent system message."""
@@ -472,6 +521,44 @@ def generate_task_improver_agent_system_message(tasklist, history, task_role, ta
             Your meticulous attention to improving your work based on feedback is vital for achieving excellence in the project's outcomes.
             """
     )
+    
+def generate_coding_task_improver_agent_system_message(tasklist, history, task_role, task_description, feedback, last_output):
+    """Generates a system message focused on improving coding/programming tasks."""
+
+    return (f"""
+            As a developer tasked with refining our codebase, your insights and improvements are key to enhancing the project's quality and functionality. Here's what you need to know to effectively upgrade your previous work:
+
+            1. Task Breakdown: Understand the full spectrum of programming tasks to see how your improvements contribute to the larger project.
+            ```
+            {tasklist}
+            ```
+
+            2. Development History: Review the coding efforts and milestones achieved so far to contextualize your improvements.
+            ```
+            {history}
+            ```
+
+            3. Your Last Output: Reflect on the code you previously submitted to identify the basis for your enhancements.
+            ```
+            {last_output}
+            ```
+
+            4. Improvement Task: '{task_description}'. Specifies the enhancements, optimizations, or bug fixes you are to implement in your code.
+
+            5. Feedback: Use this detailed feedback to precisely target your code improvements.
+            ```
+            {feedback}
+            ```
+
+            Improvement Guidelines:
+            - Prioritize addressing the feedback with a focus on enhancing code quality, functionality, and performance to better meet the project's objectives.
+            - Ensure your revised code is thoroughly tested, well-documented, and integrates seamlessly with the existing codebase, maintaining high standards for readability and maintainability.
+            - Adopt a proactive approach to identifying and resolving any additional issues or inefficiencies in your code beyond the feedback provided, aiming for robust and scalable solutions.
+
+            Your dedication to refining and perfecting the code is essential for elevating the project's overall quality and success.
+            """
+    )
+
 
 def generate_reviewer_system_message(user_input, agent_output, task):
     """Generates Reviewer system message."""
@@ -511,6 +598,39 @@ def generate_reviewer_system_message(user_input, agent_output, task):
             
             Your analysis is vital for maintaining the quality of responses provided to users.
             """)
+    
+def generate_coding_reviewer_feedback(user_input, agent_output, task_description):
+    """Generates feedback focused on evaluating coding or programming output in relation to the user's objectives and the specific task."""
+
+    return (f"""
+            As a reviewer, your objective is to provide constructive feedback on the coding output presented by the agent, ensuring it aligns with the user's specified goal and the detailed task requirements. Here’s the basis for your feedback:
+
+            - User’s Objective: Gauge whether the code fulfills the user's intended purpose, keeping their ultimate goal in mind.
+            ```
+            {user_input}
+            ```
+            - Task Description: Reflect on the specific coding task the agent was supposed to accomplish, ensuring the output is a direct response to this.
+            ```
+            {st.session_state['current_task']}
+            ```
+            - Agent’s Coding Output: Analyze the provided code to assess its effectiveness in meeting the task and user’s needs.
+            ```
+            {agent_output}
+            ```
+
+            Feedback Guidelines:
+            - Structure your feedback to highlight whether the agent's coding output successfully meets the user's goal and task requirements. Start your feedback with:
+                - '### Needs Adjustment ###' to indicate areas where the code falls short of the task's demands or user's expectations. Provide specific insights into what adjustments are needed.
+                - '### Satisfied ###' if the code effectively accomplishes the user's goal and the task's specifications.
+            - Focus your critique on:
+                1. Accuracy: Does the code directly and effectively address the user's goal and the task's specifics?
+                2. Completeness: Is the code comprehensive, including all necessary components to fulfill the task?
+                3. Relevance: Does every part of the code contribute towards achieving the user's stated objective?
+                4. Quality: Evaluate the code for logical coherence, absence of errors, and overall integrity to ensure high standards.
+
+            Your detailed feedback is crucial for enhancing the quality of the coding output and ensuring it meets the user's needs and expectations.
+            """)
+
 
 def parse_plan_to_json(plan):
     # Enhanced pattern to capture tasks with more variability in formatting
@@ -777,21 +897,26 @@ def sidebar_setup():
 
 def handle_adjustable_settings_and_input():
     with st.sidebar.expander("Adjustable Settings", expanded=False):
-        download_on = st.checkbox("Enable Download", False, disabled=st.session_state.get('pressed_submit', False))
-        st.session_state['temperature'] = st.slider("Set Agent Temperature", 0.0, 1.0, 0.7, 0.1)
-        st.session_state['action_amount1'] = st.slider("How many tasks should the planner make?", 3, 15, 5, 1, key="Task Amount")
-        secondary_tasks = st.checkbox("Secondary tasks", False, key="secondary_task_plan")
+        download_on = st.checkbox(label="Enable Download", value=False, disabled=False, key="download_on", help="When enabled, in the end, you will have the option to download the full log of the agents and the final output.")
+        st.session_state['temperature'] = st.slider(label="Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, key="Temperature", help="A lower value makes the program more deterministic, while a higher value will make it more creative")
+        st.session_state['action_amount1'] = st.slider(label="How many tasks should the planner make?", min_value=3, max_value=15, value=5, step=1, key="Task Amount", help="This determines how many tasks there will be in the taskplan.")
+        secondary_tasks = st.checkbox(label="Secondary tasks", value=False, key="secondary_task_plan", help="When enabled, the program wil create subtasks for each task in the taskplan and will execute these subtasks sequentially")
 
         action_amount2 = None
         if secondary_tasks:
-            action_amount2 = st.session_state['action_amount2'] = st.slider("How many secondary tasks should the planner make?", 2, 5, 3, 1, key="Secondary Task Amount")
+            action_amount2 = st.session_state['action_amount2'] = st.slider(label="How many secondary tasks should the planner make?", min_value=2, max_value=5, value=3, step=1, key="Secondary Task Amount", help="This determines how many subtasks there will be created for each task in the taskplan. (This will exponentially increase the running time of the program...)")
+
+        coding_task = st.checkbox(label="Coding run?", value=False, key="coding_run", help="When enabled, the program will focus on actually writing the code of the goal")
+        if coding_task:
+            st.session_state['coding_task'] = True
+            coding_enabled = st.session_state['coding_task']
 
     with st.sidebar.expander("Input", expanded=True):
         user_input = st.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible)")
         plan_tasks = st.button("Plan Tasks")
         st.session_state['pressed_submit'] = plan_tasks
 
-    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
+    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks, coding_enabled
 
 def plan_primary_tasks(user_input, temperature):
     st.header("Planning: ")
@@ -877,7 +1002,7 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
 
 def main():
     initialize_streamlit_ui()
-    download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
+    download_on, secondary_tasks, action_amount2, user_input, plan_tasks, coding_enabled = sidebar_setup()
     planning, executing, reviewing = st.columns(3)
 
     if plan_tasks:
