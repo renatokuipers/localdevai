@@ -751,7 +751,7 @@ def split_history_into_chunks(max_chunk_size=2000, overlap_size=400):
 
 def execute_and_review_task(task, task_list, executing, reviewing, Execution, Finalization):
     with Execution:
-
+        executing, reviewing = st.columns(2)
         satisfied = False
 
         execution_placeholder = executing.empty()
