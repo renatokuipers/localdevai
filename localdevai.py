@@ -763,7 +763,7 @@ def execute_and_review_task(task, task_list, executing, reviewing, Execution, Fi
         if not satisfied:
             with executing:
                 st.header("Task Execution")
-                with execution_placeholder.expander(f"Task Execution:",expanded=True):
+                with st.expander(f"Task Execution:",expanded=True):
                     with st.spinner("Executing task..."):
                         executor = TaskExecutor()
                         st.session_state['current_output'] = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
@@ -777,17 +777,19 @@ def execute_and_review_task(task, task_list, executing, reviewing, Execution, Fi
                         satisfied = check_if_satisfied(review_result)
 
         while not satisfied:
-            with st.container(border=True):
-                with st.spinner(f"Adjusting Task Based on Feedback"):
-                    feedback = review_result
-                    improver = TaskImprover()
-                    st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
+            with executing:
+                with st.container(border=True):
+                    with st.spinner(f"Adjusting Task Based on Feedback"):
+                        feedback = review_result
+                        improver = TaskImprover()
+                        st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
 
-            with st.container(border=True):
-                with st.spinner("Reviewing Agent adjustment..."):
-                    reviewer = TaskReviewer()
-                    review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
-                    satisfied = check_if_satisfied(review_result)
+            with reviewing:
+                with st.container(border=True):
+                    with st.spinner("Reviewing Agent adjustment..."):
+                        reviewer = TaskReviewer()
+                        review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
+                        satisfied = check_if_satisfied(review_result)
         else:
             st.success("Task execution is satisfactory based on review.")
             st.session_state['history'] += f"\n{st.session_state['current_output']}"
@@ -828,17 +830,19 @@ def execute_and_review_subtask(task, task_list, executing, reviewing, Execution,
                         satisfied = check_if_satisfied(review_result)
 
         while not satisfied:
-            with st.container(border=True):
-                with st.spinner(f"Adjusting Task Based on Feedback for: {st.session_state['current_task']}"):
-                    feedback = review_result
-                    improver = TaskImprover()
-                    st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
+            with executing:
+                with st.container(border=True):
+                    with st.spinner(f"Adjusting Task Based on Feedback for: {st.session_state['current_task']}"):
+                        feedback = review_result
+                        improver = TaskImprover()
+                        st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
 
-            with st.container(border=True):
-                with st.spinner("Reviewing Agent adjustment..."):
-                    reviewer = TaskReviewer()
-                    review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
-                    satisfied = check_if_satisfied(review_result)
+            with reviewing:
+                with st.container(border=True):
+                    with st.spinner("Reviewing Agent adjustment..."):
+                        reviewer = TaskReviewer()
+                        review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
+                        satisfied = check_if_satisfied(review_result)
         else:
             st.success("Task execution is satisfactory based on review.")
             st.session_state['history'] += f"\n{st.session_state['current_output']}"
