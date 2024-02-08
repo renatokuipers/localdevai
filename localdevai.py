@@ -996,7 +996,7 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
                     st.session_state['output'] = output
                     placeholder_currenttask = st.empty()
                     placeholder_currenttask = st.sidebar.container(border=True) 
-    st.session_state['all_tasks_done'] = True
+        st.session_state['all_tasks_done'] = True
 
 def main():
     initialize_streamlit_ui()
@@ -1015,9 +1015,11 @@ def main():
         output = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
 
 
-    if st.session_state['all_tasks_done']:
-        st.balloons()
+    if st.session_state['all_tasks_done'] == True:
         handle_finalization_and_downloads(download_on, st.session_state['output'])
+        st.balloons()
+    else:
+        pass
 
 if __name__ == "__main__":
     main()
