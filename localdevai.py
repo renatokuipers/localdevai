@@ -998,7 +998,7 @@ def main():
     download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
     planning, executing, reviewing = st.columns(3)
 
-    Planning = st.tabs(tabs=["Planning"])
+    Planning, Execution, Finalization = st.tabs(tabs=["Planning", "Execution","Finalization"])
     if plan_tasks:
         with Planning:
             with st.container(border=True):
