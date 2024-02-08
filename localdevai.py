@@ -232,7 +232,7 @@ class TaskExecutor:
                 )
             history_update = [
                 {"role": "system", "content": task_agent_message},
-                {"role": "user", "content": "Please proceed to execute your assigned task with the guidance provided. It's imperative to closely follow the outlined instructions and criteria to ensure your work contributes effectively to the overall goal. Remember, the quality of your execution is crucial. Let's aim for excellence in completing your task."}
+                {"role": "user", "content": "Please proceed to execute your assigned task with the guidance provided."}
             ]
             response = generate_response(history_update, temperature)
             self.store_task_output(task.description, task.task_type, task.role, response)
@@ -270,7 +270,7 @@ class TaskImprover:
             )
         history_update = [
             {"role": "system", "content": task_agent_message},
-            {"role": "user", "content": "Now, it's time to revise, refine, and enhance your last output, taking into account the specific feedback provided. This feedback is crucial for improving the quality and effectiveness of your work. Please carefully incorporate the suggestions to ensure your updated output fully aligns with the expectations."}
+            {"role": "user", "content": "Now, it's time to revise, refine, and enhance your last output, taking into account the specific feedback provided."}
         ]
         response = generate_response(history_update, temperature)
         self.update_task_output(task.description, task.task_type, task.role, response)
