@@ -1013,7 +1013,15 @@ def main():
         handle_finalization_and_downloads(download_on, st.session_state['output'])
         st.balloons()
     else:
-        pass
+        if download_on:
+            st.balloons()
+            st.download_button(
+                label='Download full execution log',
+                data=st.session_state['history'],
+                file_name='execution_output.txt'
+            )
+        else:
+            st.write("All the tasks are executed. If you wanted to be able to download the full log, enable the 'Enable Download' option in the Adjustable settings menu.")
 
 if __name__ == "__main__":
     main()
