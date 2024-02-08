@@ -15,9 +15,7 @@ Local Devai is an AI-powered application designed to streamline the process of t
 ### Prerequisites
 
 Before you begin, ensure you have the following installed:
-- Python 3.8 or newer
-- Streamlit
-- SQLite (for database interactions)
+- Python 3.9 or newer
 
 ### Installation
 
