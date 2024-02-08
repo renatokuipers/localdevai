@@ -711,13 +711,6 @@ def handle_finalization_and_downloads(download_on, execution_result):
         with st.expander("Final Output"):
             finalizer = Finalizer()
             final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
-            task = "Armed with the detailed content and precise guidelines provided, your mission now is to synthesize the final, unified output. This crucial phase is where your skills truly shine, as you blend all project elements into a seamless whole. As you embark on this task, prioritize maintaining the integrity of the original project vision, ensuring every piece of content contributes meaningfully to the end goal. Remember, your meticulous effort to integrate, refine, and polish the project's components is essential for delivering an outcome that not only meets but exceeds expectations. Your role is fundamental in turning the project's blueprint into a standout, ready-to-launch masterpiece."
-
-    with st.spinner("Reviewing the final output..."):
-            reviewer = TaskReviewer()
-            review_result = reviewer.review_task(final_output, task, st.session_state['temperature'])
-
-            final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
             write_to_file("final_output.txt", final_output)
 
     if download_on and final_output:
@@ -1009,19 +1002,8 @@ def main():
         st.session_state['output'] = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
 
 
-    if st.session_state['all_tasks_done'] == True:
         handle_finalization_and_downloads(download_on, st.session_state['output'])
         st.balloons()
-    else:
-        if download_on:
-            st.balloons()
-            st.download_button(
-                label='Download full execution log',
-                data=st.session_state['history'],
-                file_name='execution_output.txt'
-            )
-        else:
-            st.write("All the tasks are executed. If you wanted to be able to download the full log, enable the 'Enable Download' option in the Adjustable settings menu.")
 
 if __name__ == "__main__":
     main()
