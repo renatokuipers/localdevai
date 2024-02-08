@@ -716,7 +716,6 @@ def handle_finalization_and_downloads(download_on, execution_result):
     with st.spinner("Reviewing the final output..."):
             reviewer = TaskReviewer()
             review_result = reviewer.review_task(final_output, task, st.session_state['temperature'])
-            satisfied = check_if_satisfied(review_result)
 
             final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
             write_to_file("final_output.txt", final_output)
@@ -903,14 +902,13 @@ def handle_adjustable_settings_and_input():
         coding_task = st.checkbox(label="Coding run?", value=False, key="coding_run", help="When enabled, the program will focus on actually writing the code of the goal")
         if coding_task:
             st.session_state['coding_task'] = True
-            coding_enabled = st.session_state['coding_task']
 
     with st.sidebar.expander("Input", expanded=True):
-        user_input = st.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible)")
+        st.session_state['user_input'] = st.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible)")
         plan_tasks = st.button("Plan Tasks")
         st.session_state['pressed_submit'] = plan_tasks
 
-    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
+    return download_on, secondary_tasks, action_amount2, st.session_state['user_input'], plan_tasks
 
 def plan_primary_tasks(user_input, temperature):
     st.header("Planning: ")
