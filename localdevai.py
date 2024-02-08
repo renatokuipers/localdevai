@@ -706,12 +706,13 @@ def check_if_satisfied(review_result):
     adjustment_pattern = r"(###\s*)?Needs\s*Adjustment(\s*###)?"
     return not re.search(adjustment_pattern, review_result, re.IGNORECASE)
 
-def handle_finalization_and_downloads(download_on, execution_result):
-    with st.spinner("Creating the final output..."):
-        with st.expander("Final Output"):
-            finalizer = Finalizer()
-            final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
-            write_to_file("final_output.txt", final_output)
+def handle_finalization_and_downloads(download_on, execution_result, Finalization):
+    with Finalization:
+        with st.spinner("Creating the final output..."):
+            with st.expander("Final Output"):
+                finalizer = Finalizer()
+                final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
+                write_to_file("final_output.txt", final_output)
 
     if download_on and final_output:
         st.balloons()
@@ -748,105 +749,108 @@ def split_history_into_chunks(max_chunk_size=2000, overlap_size=400):
 
     return st.session_state['chunks']
 
-def execute_and_review_task(task, task_list, executing, reviewing):
-    satisfied = False
+def execute_and_review_task(task, task_list, executing, reviewing, Execution, Finalization):
+    with Execution:
 
-    execution_placeholder = executing.empty()
-    review_placeholder = reviewing.empty()
+        satisfied = False
 
-    st.session_state['current_output'] = ""
-    st.session_state['current_task'] = task.description
+        execution_placeholder = executing.empty()
+        review_placeholder = reviewing.empty()
 
-    if not satisfied:
-        with executing:
-            execution_placeholder.header("Task Execution")
-            with execution_placeholder.expander(f"Task Execution:",expanded=True):
-                with st.spinner("Executing task..."):
-                    executor = TaskExecutor()
-                    st.session_state['current_output'] = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
+        st.session_state['current_output'] = ""
+        st.session_state['current_task'] = task.description
 
-        with reviewing:
-            review_placeholder.header("Reviewing")
-            with review_placeholder.expander(f"Reviewing output", expanded=True):
-                with st.spinner("Reviewing Agent output..."):
+        if not satisfied:
+            with executing:
+                st.header("Task Execution")
+                with execution_placeholder.expander(f"Task Execution:",expanded=True):
+                    with st.spinner("Executing task..."):
+                        executor = TaskExecutor()
+                        st.session_state['current_output'] = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
+
+            with reviewing:
+                st.header("Reviewing")
+                with st.expander(f"Reviewing output", expanded=True):
+                    with st.spinner("Reviewing Agent output..."):
+                        reviewer = TaskReviewer()
+                        review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
+                        satisfied = check_if_satisfied(review_result)
+
+        while not satisfied:
+            with st.container(border=True):
+                with st.spinner(f"Adjusting Task Based on Feedback"):
+                    feedback = review_result
+                    improver = TaskImprover()
+                    st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
+
+            with st.container(border=True):
+                with st.spinner("Reviewing Agent adjustment..."):
                     reviewer = TaskReviewer()
                     review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
                     satisfied = check_if_satisfied(review_result)
+        else:
+            st.success("Task execution is satisfactory based on review.")
+            st.session_state['history'] += f"\n{st.session_state['current_output']}"
+            write_to_file("execution_output.txt", st.session_state['current_output'])
+            execution_placeholder.empty()
+            review_placeholder.empty()
 
-    while not satisfied:
-        with execution_placeholder.container(border=True):
-            with st.spinner(f"Adjusting Task Based on Feedback"):
-                feedback = review_result
-                improver = TaskImprover()
-                execution_result = st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
-
-        with review_placeholder.container(border=True):
-            with st.spinner("Reviewing Agent adjustment..."):
-                reviewer = TaskReviewer()
-                review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
-                satisfied = check_if_satisfied(review_result)
-    else:
-        st.success("Task execution is satisfactory based on review.")
-        st.session_state['history'] += f"\n{st.session_state['current_output']}"
-        write_to_file("execution_output.txt", st.session_state['current_output'])
-        execution_placeholder.empty()
-        review_placeholder.empty()
-
-    # Update the 'completed_tasks' list and clear 'current_task'
-    st.session_state['completed_tasks'].append(st.session_state['current_task'])
-    output = st.session_state['current_output']
-    st.session_state['current_task'] = ""
+        # Update the 'completed_tasks' list and clear 'current_task'
+        st.session_state['completed_tasks'].append(st.session_state['current_task'])
+        output = st.session_state['current_output']
+        st.session_state['current_task'] = ""
     return output
 
-def execute_and_review_subtask(task, task_list, executing, reviewing):
-    satisfied = False
+def execute_and_review_subtask(task, task_list, executing, reviewing, Execution, Finalization):
+    with Execution:
+        satisfied = False
 
-    execution_placeholder = executing.empty()
-    review_placeholder = reviewing.empty()
+        execution_placeholder = executing.empty()
+        review_placeholder = reviewing.empty()
 
-    st.session_state['current_output'] = ""
-    st.session_state['current_task'] = task.description
+        st.session_state['current_output'] = ""
+        st.session_state['current_task'] = task.description
 
-    if not satisfied:
-        with executing:
-            execution_placeholder.header("Task Execution")
-            with execution_placeholder.expander(f"Task Execution: {st.session_state['current_task']}",expanded=True):
-                with st.spinner("Executing task..."):
-                    executor = TaskExecutor()
-                    st.session_state['current_output'] = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
+        if not satisfied:
+            with executing:
+                st.header("Task Execution")
+                with st.expander(f"Task Execution: {st.session_state['current_task']}",expanded=True):
+                    with st.spinner("Executing task..."):
+                        executor = TaskExecutor()
+                        st.session_state['current_output'] = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
 
-        with reviewing:
-            review_placeholder.header("Reviewing")
-            with review_placeholder.expander(f"Reviewing output", expanded=True):
-                with st.spinner("Reviewing Agent output..."):
+            with reviewing:
+                st.header("Reviewing")
+                with st.expander(f"Reviewing output", expanded=True):
+                    with st.spinner("Reviewing Agent output..."):
+                        reviewer = TaskReviewer()
+                        review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
+                        satisfied = check_if_satisfied(review_result)
+
+        while not satisfied:
+            with st.container(border=True):
+                with st.spinner(f"Adjusting Task Based on Feedback for: {st.session_state['current_task']}"):
+                    feedback = review_result
+                    improver = TaskImprover()
+                    st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
+
+            with st.container(border=True):
+                with st.spinner("Reviewing Agent adjustment..."):
                     reviewer = TaskReviewer()
                     review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
                     satisfied = check_if_satisfied(review_result)
+        else:
+            st.success("Task execution is satisfactory based on review.")
+            st.session_state['history'] += f"\n{st.session_state['current_output']}"
+            write_to_file("execution_output.txt", st.session_state['current_output'])
+            execution_placeholder.empty()
+            review_placeholder.empty()
 
-    while not satisfied:
-        with execution_placeholder.container(border=True):
-            with st.spinner(f"Adjusting Task Based on Feedback for: {st.session_state['current_task']}"):
-                feedback = review_result
-                improver = TaskImprover()
-                st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
-
-        with review_placeholder.container(border=True):
-            with st.spinner("Reviewing Agent adjustment..."):
-                reviewer = TaskReviewer()
-                review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
-                satisfied = check_if_satisfied(review_result)
-    else:
-        st.success("Task execution is satisfactory based on review.")
-        st.session_state['history'] += f"\n{st.session_state['current_output']}"
-        write_to_file("execution_output.txt", st.session_state['current_output'])
-        execution_placeholder.empty()
-        review_placeholder.empty()
-
-    # Update the 'completed_tasks' list and clear 'current_task'
-    st.session_state['completed_tasks'].append(st.session_state['current_task'])
-    st.session_state['current_task'] = ""
-    output = st.session_state['current_output']
-    return output
+        # Update the 'completed_tasks' list and clear 'current_task'
+        st.session_state['completed_tasks'].append(st.session_state['current_task'])
+        st.session_state['current_task'] = ""
+        output = st.session_state['current_output']
+        return output
 
 def initialize_streamlit_ui():
     st.set_page_config(
@@ -936,14 +940,14 @@ def visualize_task_planning(task_list_json, planning):
             else:
                 st.text(f"Task: {task_info['ID']} - {task_info['Description']}")
 
-def execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning):
+def execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning, Execution, Finalization):
     if secondary_tasks:
-        output = execute_and_review_subtasks(task_list_json, executing, reviewing, planning)
+        output = execute_and_review_subtasks(task_list_json, executing, reviewing, planning, Execution, Finalization)
     else:
-        output = execute_and_review_tasks(task_list_json, executing, reviewing)
+        output = execute_and_review_tasks(task_list_json, executing, reviewing, Execution, Finalization)
     return output
 
-def execute_and_review_tasks(task_list_json, executing, reviewing):
+def execute_and_review_tasks(task_list_json, executing, reviewing, Execution, Finalization):
     task_list = TaskList()
     placeholder_currenttask = st.empty()
     placeholder_currenttask = st.sidebar.container(border=True)
@@ -956,13 +960,13 @@ def execute_and_review_tasks(task_list_json, executing, reviewing):
             task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
             task_list.add_task(task)
             st.session_state["task_list"].append({"description": task.description, "completed": False})
-            output = execute_and_review_task(task, task_list, executing, reviewing)
+            output = execute_and_review_task(task, task_list, executing, reviewing, Execution, Finalization)
             st.session_state['output'] = output
             placeholder_currenttask = st.empty()
             placeholder_currenttask = st.sidebar.container(border=True)
         st.session_state['all_tasks_done'] = True
 
-def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
+def execute_and_review_subtasks(task_list_json, executing, reviewing, planning, Execution, Finalization):
     task_list2 = TaskList()
 
     placeholder_currenttask = st.empty()
@@ -979,7 +983,7 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
                     subtask = Task(subtask_info['ID'], subtask_info['Description'], subtask_info['Type'], subtask_info['Role'])
                     task_list2.add_task(subtask)
                     st.session_state["task_list2"].append({"description": subtask.description, "completed": False})
-                    output = execute_and_review_subtask(subtask, task_list2, executing, reviewing)
+                    output = execute_and_review_subtask(subtask, task_list2, executing, reviewing, Execution, Finalization)
                     st.session_state['output'] = output
                     placeholder_currenttask = st.empty()
                     placeholder_currenttask = st.sidebar.container(border=True) 
@@ -998,11 +1002,13 @@ def main():
                     st.session_state['task_list_json'] = plan_secondary_tasks(st.session_state['task_list_json'], st.session_state['temperature'], action_amount2)
                 st.write(st.session_state['task_list_json'])
 
+
+        Execution, Finalization = st.tabs(tabs=["Execution","Finalization"])
         #visualize_task_planning(task_list_json, planning)
-        st.session_state['output'] = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
+        st.session_state['output'] = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning, Execution, Finalization)
 
 
-        handle_finalization_and_downloads(download_on, st.session_state['output'])
+        handle_finalization_and_downloads(download_on, st.session_state['output'], Finalization)
         st.balloons()
 
 if __name__ == "__main__":
