@@ -291,8 +291,8 @@ class TaskReviewer:
             {"role": "system", "content": reviewer_message},
             {"role": "user", "content": "Please proceed to provide your feedback based on the guidelines outlined mentioned before. It's crucial to strictly follow these rules to ensure the feedback is constructive and aligns with the evaluation criteria. Your insights are valuable to us, so please be thorough and precise in your assessment."}
         ]
-        #response = generate_response(history, temperature)
-        response = generate_openai_response(history, temperature)
+        response = generate_response(history, temperature)
+        #response = generate_openai_response(history, temperature)
         return response
 
 class Finalizer:
