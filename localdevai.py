@@ -716,8 +716,12 @@ def handle_finalization_and_downloads(download_on, execution_result):
             review_result = reviewer.review_task(final_output, task, st.session_state['temperature'])
             satisfied = check_if_satisfied(review_result)
 
-            final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
-            write_to_file("final_output.txt", final_output)
+            while not satisfied:
+                with st.spinner("Rewriting the final output.."):
+                    final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
+
+            else:
+                write_to_file("final_output.txt", final_output)
 
     if download_on and final_output:
         st.balloons()
@@ -886,7 +890,7 @@ def sidebar_setup():
 
     if st.sidebar.button('Clear Session and Start Over', key="Clear_session"):
         st.session_state.clear()
-        st.experimental_rerun()
+        st.rerun()
 
     download_on, secondary_tasks, action_amount2, user_input, plan_tasks = handle_adjustable_settings_and_input()
     return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
