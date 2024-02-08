@@ -1,7 +1,3 @@
-Certainly! Below is a README template for your application. You can adjust the content to fit your project's specifics better or add additional sections as needed.
-
----
-
 # Local Devai: Task Planning and Execution System
 
 Local Devai is an AI-powered application designed to streamline the process of task planning, execution, and review. Built with Streamlit and powered by OpenAI's GPT models, Local Devai enables users to input their goals and automatically generates a detailed task plan, executes these tasks with intelligent agents, and reviews the outputs to ensure quality and alignment with the initial objectives.
@@ -73,7 +69,3 @@ Distributed under the MIT License. See `LICENSE` for more information.
 - OpenAI for providing the GPT models.
 - Streamlit for the interactive web application framework.
 - SQLite for the database management system.
-
----
-
-Remember to replace `https://github.com/your-username/Local-Devai.git` with your actual GitHub repository URL and adjust any specific details to better fit your project's requirements.
