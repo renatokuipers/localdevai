@@ -1020,7 +1020,7 @@ def main():
 
 
     with Finalization:
-        if st.session_state['all_tasks_done']:
+        if st.session_state['all_tasks_done'] == True:
             st.balloons()
             handle_finalization_and_downloads(download_on, st.session_state['output'])
 
