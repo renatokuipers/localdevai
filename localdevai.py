@@ -932,9 +932,9 @@ def plan_secondary_tasks(task_list_json, temperature, action_amount2):
         with st.spinner(f"Generating secondary task plan for {task_info['ID']} with objective: {task_info['Description']}..."):
             with st.expander(f"Secondary Planning for task: {task_info['ID']}", expanded=False):
                 second_task_planner = SecondTaskPlanner(task_info['Description'], temperature, action_amount2)
-                st.session_state['task_list_json'] = second_task_planner.generate_plan(temperature, action_amount2)
+                secondary_plan_output = second_task_planner.generate_plan(temperature, action_amount2)
                 with st.spinner("Creating JSON Taskplan, please have patience..."):
-                    json_formatter = JsonFormatter(st.session_state['task_list_json'], temperature)
+                    json_formatter = JsonFormatter(secondary_plan_output, temperature)
                     formatted_secondary_tasks = json_formatter.reformat(temperature)
                 task_info['subtasks'] = formatted_secondary_tasks
     return task_list_json
@@ -949,9 +949,9 @@ def visualize_task_planning(task_list_json, planning):
             else:
                 st.text(f"Task: {task_info['ID']} - {task_info['Description']}")
 
-def execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing):
+def execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning):
     if secondary_tasks:
-        output = execute_and_review_subtasks(task_list_json, executing, reviewing)
+        output = execute_and_review_subtasks(task_list_json, executing, reviewing, planning)
     else:
         output = execute_and_review_tasks(task_list_json, executing, reviewing)
     return output
@@ -975,7 +975,7 @@ def execute_and_review_tasks(task_list_json, executing, reviewing):
             placeholder_currenttask = st.sidebar.container(border=True)
     st.session_state['all_tasks_done'] = True
 
-def execute_and_review_subtasks(task_list_json, executing, reviewing):
+def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
     task_list2 = TaskList()
 
     placeholder_currenttask = st.empty()
@@ -983,6 +983,7 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing):
 
     with placeholder_currenttask:
         for main_task_index, main_task_info in enumerate(task_list_json):
+            planning.write(f"Processing Main Task: {main_task_info['ID']} - {main_task_info['Description']}")
             if 'subtasks' in main_task_info and main_task_info['subtasks']:
                 for subtask_index, subtask_info in enumerate(main_task_info['subtasks']):
                     st.write(f"Executing Subtask: {subtask_info['ID']}")
@@ -1000,29 +1001,23 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing):
 def main():
     initialize_streamlit_ui()
     download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
+    planning, executing, reviewing = st.columns(3)
 
-    Planning, Execution, Finalization = st.tabs(tabs=["Planning", "Execution", "Finalization"])
-
-    #planning, executing, reviewing = st.columns(3)
-
-    with Planning:
-        if plan_tasks:
+    if plan_tasks:
+        with planning:
             with st.container(border=True):
                 st.session_state['task_list_json'] = plan_primary_tasks(user_input, st.session_state['temperature'])
                 if secondary_tasks:
                     st.session_state['task_list_json'] = plan_secondary_tasks(st.session_state['task_list_json'], st.session_state['temperature'], action_amount2)
                 st.write(st.session_state['task_list_json'])
 
-    with Execution:
-        executing, reviewing = st.columns(2)
         #visualize_task_planning(task_list_json, planning)
-        execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing)
+        output = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
 
 
-    with Finalization:
-        if st.session_state['all_tasks_done'] == True:
-            st.balloons()
-            handle_finalization_and_downloads(download_on, st.session_state['output'])
+    if st.session_state['all_tasks_done']:
+        st.balloons()
+        handle_finalization_and_downloads(download_on, st.session_state['output'])
 
 if __name__ == "__main__":
     main()
