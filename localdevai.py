@@ -1,20 +1,24 @@
 import os
 import re
 import json
-from dotenv import load_dotenv
 from openai import OpenAI
 import streamlit as st
 import sqlite3
 
 ### Constants ###
-MODEL_LOCAL = "local_model"
-API_KEY = "not-needed"
-BASE_URL = "http://82.170.246.151:1234/v1"
-#BASE_URL = "http://localhost:1234/v1"
+# Local constants:#
+MODEL_LOCAL = "local_model" # No specific name has to be given... 
+API_KEY = "not-needed" # local models don't have an API key...
+# BASE_URL = "http://localhost:1234/v1" # for local use...
+BASE_URL = "http://82.170.246.151:1234/v1" # for external use..
+
+# OpenAI constants: (these cost money!!!)#
+# BASE_URL = "https://api.openai.com/v1"
+# MODEL_LOCAL = "gpt-4-0125-preview"
+# API_KEY = "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"
 
 ### Initializations ###
 chat_client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
-load_dotenv()
 
 ### Initialize or update session state variables ###
 if 'history' not in st.session_state:
@@ -30,11 +34,27 @@ if 'agent_output' not in st.session_state:
 if 'already_written' not in st.session_state:
     st.session_state['already_written'] = False
 if 'temperature' not in st.session_state:
-    st.session_state['temperature'] = 0.7
+    temperature = 0.7
 if 'current_output' not in st.session_state:
     st.session_state['current_output'] = ""
 if 'completed_tasks' not in st.session_state:
     st.session_state['completed_tasks'] = []
+if 'current_task' not in st.session_state:
+    st.session_state['current_task'] = ""
+if 'all_tasks_done' not in st.session_state:
+    st.session_state['all_tasks_done'] = False
+if 'output' not in st.session_state:
+    st.session_state['output'] = ""
+if 'action_amount' not in st.session_state:
+    st.session_state['action_amount1'] = 5
+if 'action_amount2' not in st.session_state:
+    st.session_state['action_amount2'] = 3
+if 'pressed_submit' not in st.session_state:
+    st.session_state['pressed_submit'] = False
+if 'task_list2' not in st.session_state:
+    st.session_state["task_list2"] = []
+if 'task_list' not in st.session_state:    
+    st.session_state["task_list"] = []
 
 ### Classes ###
 class Task:
@@ -74,14 +94,77 @@ class TaskPlanner:
         self.temperature = temperature
 
     def generate_plan(self, temperature):
-        print_section_header("Task Planning")
+        print_section_header("Task Planning...")
         history = [
-            {"role": "system", "content": generate_ceo_system_message(self.user_input)},
-            {"role": "user", "content": "Now, exectute your task as mentioned before and make sure that you strictly adhere to the rules"}
+            {"role": "system", "content": generate_ceo_system_message(self.user_input, st.session_state['action_amount1'])},
+            {"role": "user", "content": "Now, proceed to outline your strategic plan as instructed. It's imperative that you strictly follow the provided format and guidelines for each task. This precision is essential for creating a clear, actionable plan that aligns with the goal. Let's ensure that the plan is thoughtfully structured and contributes effectively towards achieving the objective."}
         ]
         with st.chat_message("ai"):
             plan = generate_response(history, self.temperature)
-        return parse_plan_to_json(plan)
+            return plan
+
+class SecondTaskPlanner:
+    """Class for planning tasks."""
+    
+    def __init__(self, user_input, temperature, secondtaskplanner):
+        self.user_input = user_input
+        self.temperature = temperature
+        self.second_task_planner = secondtaskplanner
+
+    def generate_plan(self, temperature, second_task_planner):
+        print_section_header("Task Planning...")
+        history = [
+            {"role": "system", "content": generate_subtask_planner_system_message(self.user_input, st.session_state['action_amount1'], self.second_task_planner)},
+            {"role": "user", "content": "Now, proceed to outline your strategic plan as instructed. It's imperative that you strictly follow the provided format and guidelines for each subtasks. This precision is essential for creating a clear, actionable plan that aligns with the goal. Let's ensure that the plan is thoughtfully structured and contributes effectively towards achieving the objective."}
+        ]
+        with st.chat_message("ai"):
+            plan = generate_response(history, self.temperature)
+            return plan
+    
+class JsonFormatter:
+    """Class for planning tasks."""
+    
+    def __init__(self, plan, temperature):
+        self.user_input = plan
+        self.temperature = temperature
+
+    def reformat(self, temperature):
+        print_section_header("JSON Formatting...")
+        systemmessage = (
+            "Your task is to accurately transform a textual plan into a structured JSON object. "
+            "The plan outlines a series of tasks, each uniquely identified by 'ID', and described with 'Description', 'Type', and 'Role'. "
+            "You are to create a JSON array where each element is an object representing a task. "
+            "These objects must include the keys: 'ID', 'Description', 'Type', and 'Role', with their respective values derived from the plan.\n"
+            "Key requirements are as follows:\n"
+            "- 'ID' should be parsed as a numeric value.\n"
+            "- 'Description', 'Type', and 'Role' should be treated as strings.\n"
+            "- Ensure each task object is distinct and properly encapsulated within the array.\n\n"
+            "For example, the plan text should be converted into a JSON format similar to the following:\n"
+            "[\n"
+            "{'ID': 1, 'Description1': 'Task description1', 'Type1': 'Task type1', 'Role1': 'Task role1'}\n"
+            "{'ID': 2, 'Description2': 'Task description2', 'Type2': 'Task type2', 'Role2': 'Task role2'}\n"
+            "]\n\n"
+            "This is the plan:\n"
+            f"{self.user_input}\n\n"
+            "Please proceed to convert the provided plan into this JSON format with the utmost precision and care."
+        )
+
+        user_message = (
+            "Please take the provided plan and convert it into a JSON format as described. "
+            "Make sure to structure each task as a separate dictionary within a JSON array, "
+            "adhering to the specified keys: 'ID', 'Description', 'Type', and 'Role'. "
+            "It's crucial that the 'ID' is numeric, while the other fields are strings. "
+            "Each task should be clearly differentiated within the array. Use the given example as a guide "
+            "to achieve the correct formatting and structure. Your accuracy and attention to detail in following these instructions "
+            "are vital for successfully completing this task."
+        )
+        history = [
+            {"role": "system", "content": systemmessage},
+            {"role": "user", "content": user_message}
+        ]
+        plan = generate_response(history, self.temperature)
+        #return parse_plan_to_json(plan)
+        return extract_json_from_text(plan)
 
 class TaskExecutor:
     """Class for executing tasks."""
@@ -140,7 +223,7 @@ class TaskExecutor:
             )
             history_update = [
                 {"role": "system", "content": task_agent_message},
-                {"role": "user", "content": "Now, exectute your task as mentioned before and make sure that you strictly adhere to the rules"}
+                {"role": "user", "content": "Please proceed to execute your assigned task with the guidance provided. It's imperative to closely follow the outlined instructions and criteria to ensure your work contributes effectively to the overall goal. Remember, the quality of your execution is crucial. Let's aim for excellence in completing your task."}
             ]
             response = generate_response(history_update, temperature)
             self.store_task_output(task.description, task.task_type, task.role, response)
@@ -173,7 +256,7 @@ class TaskImprover:
         )
         history_update = [
             {"role": "system", "content": task_agent_message},
-            {"role": "user", "content": "Now, please update/adjust/improve your last output based on the following feedback: " + feedback}
+            {"role": "user", "content": "Now, it's time to revise, refine, and enhance your last output, taking into account the specific feedback provided. This feedback is crucial for improving the quality and effectiveness of your work. Please carefully incorporate the suggestions to ensure your updated output fully aligns with the expectations."}
         ]
         response = generate_response(history_update, temperature)
         self.update_task_output(task.description, task.task_type, task.role, response)
@@ -188,7 +271,7 @@ class TaskReviewer:
         reviewer_message = generate_reviewer_system_message(st.session_state['user_input'], output, task)
         history = [
             {"role": "system", "content": reviewer_message},
-            {"role": "user", "content": "Now, exectute your task as mentioned before and make sure that you strictly adhere to the rules"}
+            {"role": "user", "content": "Please proceed to provide your feedback based on the guidelines outlined mentioned before. It's crucial to strictly follow these rules to ensure the feedback is constructive and aligns with the evaluation criteria. Your insights are valuable to us, so please be thorough and precise in your assessment."}
         ]
         response = generate_response(history, temperature)
         return response
@@ -199,9 +282,39 @@ class Finalizer:
     def compile_final_output(self, file_path, temperature):
         print_section_header("Finalizing the answer...")
         content = read_from_file(file_path)
+        finalizer_systemmessage = f"""
+        As the Finalizer, your pivotal task is to synthesize all provided content into one singular, comprehensive output. 
+        This entails integrating various components—whether they are segments of code, narrative elements, or sections of a document—into a coherent and complete final product that aligns with the project's initial goal.
+
+        Content for Finalization:
+        The content provided below represents the entirety of work produced throughout the project. 
+        Your responsibility is to meticulously merge this content into a unified output that meets the specific project requirements:
+        ```
+        {content}
+        ```
+
+        Task Objective:
+        - For a coding project, combine all code snippets and explanations into a fully functional program or system, accompanied by a cohesive documentation that explains the architecture, functionality, and usage.
+        - For a narrative project, such as a story or novel, weave all narrative pieces and character developments into a fluid, engaging, and complete narrative.
+        - For a document, like a Product Requirements Document (PRD), compile all sections into a well-structured, coherent document that clearly outlines the product's vision, features, and specifications.
+
+        Expected Outcome:
+        Your final output must be a polished, professional, and complete version that is ready for presentation, publication, or deployment. 
+        It should:
+        - Seamlessly integrate all provided content without redundancies.
+        - Address the project's goals and objectives as outlined in the initial user input.
+        - Be free of placeholders, incomplete thoughts, or skeletal code. Every element must contribute to the overall purpose and functionality of the project.
+
+        Restrictions:
+        - Do not introduce new concepts, functionalities, or narrative elements not already included in the provided content.
+        - Avoid restructuring the core ideas or altering the project's intended direction.
+        - Ensure the final output adheres to the project's theme, technical specifications, and narrative voice (where applicable).
+
+        Your role as the Finalizer is crucial in bringing coherence and completion to the project. This final output is the culmination of all prior efforts and should reflect a deep understanding of the project's objectives and the ability to create a cohesive, impactful final product.
+        """
         history = [
-            {"role": "system", "content": "You are a finalizer. Now, please create 1 single coherent output that uses ALL the content that is generated throughout the given content.(If the content is mainly code, show the full final code based on all the codesnippets. If the content is a story, write the full complete story based on all the content, If the content is a PRD, write the full PRD based on all the snippets, etc...). Here is the content:"},
-            {"role": "user", "content": content}
+            {"role": "system", "content": finalizer_systemmessage},
+            {"role": "user", "content": "Armed with the detailed content and precise guidelines provided, your mission now is to synthesize the final, unified output. This crucial phase is where your skills truly shine, as you blend all project elements into a seamless whole. As you embark on this task, prioritize maintaining the integrity of the original project vision, ensuring every piece of content contributes meaningfully to the end goal. Remember, your meticulous effort to integrate, refine, and polish the project's components is essential for delivering an outcome that not only meets but exceeds expectations. Your role is fundamental in turning the project's blueprint into a standout, ready-to-launch masterpiece."}
         ]
         response = generate_response(history, temperature)
         return response
@@ -226,28 +339,57 @@ def generate_response(messages, temperature):
     st.write("\n")
     return response
 
-def generate_ceo_system_message(input_text):
+def generate_response_no_stream(messages, temperature):
+    """Generates a response using OpenAI's API."""
+    
+    stream = chat_client.chat.completions.create(
+        model=MODEL_LOCAL,
+        messages=messages,
+        stream=True,
+        temperature=temperature,
+    )
+    response = ""
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            print(chunk.choices[0].delta.content, end="", flush=True)
+            response += chunk.choices[0].delta.content
+    st.write("\n")
+    return response
+
+def generate_ceo_system_message(input_text, action_amount1):
     """Generates CEO system message based on user input."""
 
-    return (
-        f"Based on the goal: '{input_text}', generate a logical step-by-step plan for reaching this goal. "
-        "The plan should include a series of a maximum of 5 tasks, each clearly defined to contribute towards achieving this goal and in the correct order of execution. "
-        "For each task, STRICTLY AND ONLY provide the following format and nothing else: \n"
-        "```\n"
-        "- ID: A unique identifier number for the task.(single INT)\n"
-        "- Description: A clear and concise explanation of what the task involves.\n"
-        "- Type: Specify the category of the task.\n"
-        "- Role: A role responsible for completing the task (should be a role for an agent).\n"
-        "```\n"
+    return (f"""
+            Your objective is to create a focused, actionable plan that directly addresses the goal: '{input_text}'. 
+            This plan should outline up to {action_amount1} specific actions needed to achieve the goal, with each action being critical to the project's success. 
+            These actions should be directly tied to the creation or development of the final output, ensuring a clear path to achieving the user's stated objective.
+
+            Task Format:
+            Follow this format closely when detailing each action, to ensure clarity and consistency in your plan:
+
+            ```
+            - ID: Assign a unique identifier to each action, using an integer (e.g., 1, 2, 3).
+            - Description: Clearly describe the action to be taken. This description should be specific, outlining exactly what will be done to contribute to the final goal.
+            - Type: Categorize the action based on its primary focus (e.g., Writing, Coding, Designing). Avoid mentioning preliminary steps like Research or Testing; focus instead on production-oriented categories.
+            - Role: Define the role responsible for executing the action. This should describe a task-specific role that an agent can perform.
+            ```
+
+            Guidelines:
+            - Focus on defining tasks that are essential for producing the final deliverable, whether it's a story, software, product design, etc.
+            - Arrange the actions in the sequence they should be carried out, from initial development to final refinement.
+            - Limit the action plan to 5 steps to ensure each is impactful and directly contributes to achieving the goal.
+
+            This approach is designed to guide the creation of a concise, direct plan that leads to the tangible completion of the user's request.
+            """
     )
 
-def generate_subtask_planner_system_message(task_description, user_input):
+def generate_subtask_planner_system_message(task_description, user_input, action_amount2):
     """Generates Subtask Planner system message."""
     
     return (
         f"Based on the goal: '{task_description}', generate a step-by-step plan for developing the goal. "
-        "The plan should include a series at a maximum of 5 tasks, each clearly defined to contribute towards achieving this goal and in the correct order of execution. "
-        "For each task, STRICTLY AND ONLY provide the list in the following format and nothing else: \n"
+        f"The plan should include a series at a maximum of {action_amount2} subtasks, each clearly defined to contribute towards achieving this goal and in the correct order of execution. "
+        "For each subtasks, STRICTLY AND ONLY provide the list in the following format and nothing else: \n"
         "```\n"
         "- ID: A unique identifier number for the task.(single INT)\n"
         "- Description: A clear and concise explanation of what the task involves.\n"
@@ -260,67 +402,152 @@ def generate_subtask_planner_system_message(task_description, user_input):
 def generate_task_agent_system_message(tasklist, history, task_role, task_description):
     """Generates Task Agent system message."""
 
-    return (
-        f"Overall Goal:\n{st.session_state['user_input']}\n\n"
-        f"Full tasklist:\n{tasklist}\n\n"
-        f"Previous actions:\n{history}\n\n"
-        f"Current role: {task_role}\n"
-        f"Current task: {task_description}\n"
-        "Based on the Overall Goal and even more importantly the Current Task, execute the current task to the best of your abilities.\n"
-        "(If the task is to create code, please only output the code and make sure that the code is fully complete without placeholders, TODO's or skeleton code).\n"
-        "(If the task is to write a story, please try your very best, to get the best possibly story out there).\n"
+    return (f"""
+            You are assigned a specific role with a task that contributes to achieving the overall goal. Here's the information you need to successfully execute your task:
+
+            1. Overall Goal: This is the ultimate objective that needs to be met.
+            ```
+            {st.session_state['user_input']}
+            ```
+
+            2. Full Tasklist: A comprehensive list of all tasks, providing context for where your task fits within the overall project.
+            ```
+            {tasklist}
+            ```
+
+            3. Previous Actions: A summary of actions previously taken, helping you understand the progression towards the overall goal.
+            ```
+            {history}
+            ```
+
+            4. Your Current Role: '{task_role}'. It defines your responsibilities and the scope of your actions.
+
+            5. Your Current Task: '{task_description}'. This is the specific task you need to focus on and execute to the best of your abilities.
+
+            Execution Guidelines:
+            - Base your actions on the overall goal and, more importantly, on the specifics of your current task. It's crucial that your execution aligns closely with the task's requirements.
+            - If your task involves coding, ensure that the code you produce is complete and functional, without any placeholders, TODOs, or skeleton structures. It should be production level coding.
+            - If your task is to write a story or create content, aim for the highest quality, engaging and fulfilling the task's creative demands to the best of your ability.
+
+            Your contribution is vital to the success of the overall goal. 
+            Execute your task with attention to detail and a commitment to quality.
+            """
     )
 
 def generate_task_improver_agent_system_message(tasklist, history, task_role, task_description, feedback, last_output):
     """Generates Task Improver Agent system message."""
 
-    return (
-        f"Full tasklist:\n{tasklist}\n\n"
-        f"Previous actions:\n{history}\n\n"
-        f"Your last output:\n{last_output}\n\n"
-        f"Current role: {task_role}\n"
-        f"Current task: {task_description}\n"
-        f"Feedback: {feedback}\n"
-        "Based on the feedback, improve and expand your last output so it will strictly adhere to the feedback.\n"
-        "(If the task is to create code, please only output the code and make sure that the code is fully complete without placeholders, TODO's or skeleton code).\n"
-        "(If the task is to write a story, please try your very best, to get the best possibly story out there).\n"
+    return (f"""
+            Your role is crucial in refining the project's output to align more closely with the overall objectives. Use the information and feedback provided to enhance your last output. Here is the context and guidance for your task:
+
+            1. Full Tasklist: Understand where your task fits within the broader scope of the project.
+            ```
+            {tasklist}
+            ```
+
+            2. Previous Actions: Review the progression towards the overall goal to inform your improvements.
+            ```
+            {history}
+            ```
+
+            3. Your Last Output: Reflect on your previous submission to understand the starting point for improvements.
+            ```
+            {last_output}
+            ```
+
+            4. Your Current Role: '{task_role}'. This role defines your specific focus on improving the existing output.
+
+            5. Your Current Task: '{task_description}'. This describes what aspect of your last output needs refinement or expansion.
+
+            6. Feedback: Utilize this targeted feedback to guide your improvements.
+            ```
+            {feedback}
+            ```
+
+            Execution Guidelines:
+            - Focus on addressing the feedback comprehensively, ensuring your revised output aligns more closely with the task requirements and overall goal.
+            - For code tasks, ensure your improved code is functional, clean, and devoid of placeholders or incomplete segments.
+            - For creative tasks, such as writing, elevate your work by enhancing its quality, depth, and engagement based on the feedback.
+
+            Your meticulous attention to improving your work based on feedback is vital for achieving excellence in the project's outcomes.
+            """
     )
 
 def generate_reviewer_system_message(user_input, agent_output, task):
     """Generates Reviewer system message."""
 
-    return (
-        "As a review agent with specialized skills, your task is to evaluate the output provided by another agent.\n"
-        "Your analysis should be based on the following criteria:\n\n"
-        "- Accuracy: Does the output accurately address the user's end goal and task list?\n"
-        "- Completeness: Is the information provided in the output thorough and detailed?\n"
-        "- Relevance: Are the details in the output relevant to the user's request?\n"
-        "- Quality: Assess the overall quality of the content for logical errors, inconsistencies, or omissions.\n\n"
-        "Here is the overall main goal the user wants to have in the end:\n"
-        "~~~\n"
-        f"{user_input}\n"
-        "~~~\n\n"
-        "This is the current objective for the agent to achieve:\n"
-        "~~~\n"
-        f"{task.description}\n"
-        "~~~\n\n"
-        "Here is the content for your review:\n"
-        "~~~\n"
-        f"{agent_output}\n"
-        "~~~\n\n"
-        "Make sure to solely focus on the task at hand with the overall goal in the back of your mind"
-        "After reviewing, label your response at the beginning with either:\n"
-        "- '### Needs Adjustment ###' if the output requires modifications.\n"
-        "- '### Satisfied ###' if the output adequately meets the criteria.\n\n"
-        "Your feedback should focus on conceptual and content-related aspects and should NOT include a revised version or example.\n"
-    )
+    return (f"""
+            Your role is to evaluate the provided agent output against specific criteria to ensure it meets the user's overall goal and the task's requirements. 
+            
+            Provided Context for Your Review:
+            - User's Overall Goal: Understand the user's ultimate objective to ensure the output aligns with achieving this goal.
+            ```
+            {user_input}
+            ```
+            - Specific Task Objective: This is what the agent aimed to accomplish in response to the user's request.
+            ```
+            {st.session_state['current_task']}
+            ```
+            - Agent's Output for Review: This is the content you need to critically evaluate.
+            ```
+            {agent_output}
+            ```
+
+            Feedback Protocol:
+            - Your feedback should focus specifically on how well the agent's output meets the evaluation criteria. Avoid suggesting revisions or providing example content. Instead, clearly identify areas of strength and areas needing improvement.
+            - Only choose 1 of the following reactions:
+                - Begin your feedback with '### Needs Adjustment ###' if you find areas where the output fails to meet the evaluation criteria. (Can only be once in your output)
+                - Begin your feedback with '### Satisfied ###' if the output meets all criteria effectively. (Can only be once in your output)
+            - If the user asks for development, coding or programming, the agent's output must be code output in the desired language!
+            - Never repeat the agent's output in your answer, only provide the feedback.
+
+
+            Focus your evaluation on the following aspects:
+            
+            1. Accuracy: Determine if the agent's output accurately addresses the user's goal and the specifics of the task.
+            2. Completeness: Evaluate if the agent's output is thorough and detailed, covering all necessary aspects of the task.
+            3. Relevance: Ensure all details in the agent's output are relevant and directly contribute to fulfilling the user's request. (For example: If the user says something about development, coding or programming, the agent's output should contain fully implemented code blocks in the desired language. If the user asks for a story, the agent's output should be a well designed story)
+            4. Quality: Assess the overall quality of the agent's output, looking for logical errors, inconsistencies, or any omissions that might affect the output's validity.
+            
+            Your analysis is vital for maintaining the quality of responses provided to users.
+            """)
 
 def parse_plan_to_json(plan):
-    """Parses a plan string into a JSON object."""
-    
-    pattern = r'ID:\s*(\w+).*?Description:\s*(.*?)[,\n].*?Type:\s*(.*?)[,\n].*?Role:\s*(.*?)[,\n]'
-    tasks = re.findall(pattern, plan, re.DOTALL)
-    return [{'ID': id, 'Description': desc.strip(), 'Type': type.strip(), 'Role': role.strip()} for id, desc, type, role in tasks]
+    # Enhanced pattern to capture tasks with more variability in formatting
+    pattern = re.compile(
+        r'(?:(?:\d+:)?\s*-?\s*ID:\s*(\d+))' +  # ID with optional numbering and hyphen
+        r'(?:\s*-?\s*Description:\s*([^:]+?))?' +  # Optional Description
+        r'(?:\s*-?\s*Type:\s*([^:]+?))?' +  # Optional Type
+        r'(?:\s*-?\s*Role:\s*([^:\n]+))?',  # Optional Role
+        re.DOTALL
+    )
+
+    tasks = []
+    for match in pattern.finditer(plan):
+        # Filtering empty matches if any field is optional and not present
+        if match.group(1):
+            task = {
+                'ID': match.group(1).strip(),
+                'Description': ' '.join(match.group(2).strip().split()) if match.group(2) else "",
+                'Type': match.group(3).strip() if match.group(3) else "",
+                'Role': match.group(4).strip() if match.group(4) else ""
+            }
+            tasks.append(task)
+
+    return tasks
+
+def extract_json_from_text(text):
+    pattern = r"\{[^{}]*\}"
+    json_matches = re.findall(pattern, text)
+    extracted_json = []
+    for match in json_matches:
+        try:
+            extracted_json.append(json.loads(match))
+        except json.JSONDecodeError:
+            pass
+
+    # Return the extracted JSON objects
+    return extracted_json
 
 def get_user_goal():
     """Asks the user for their goal."""
@@ -362,7 +589,19 @@ def handle_finalization_and_downloads(download_on, execution_result):
         with st.expander("Final Output"):
             finalizer = Finalizer()
             final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
-            write_to_file("final_output.txt", final_output)
+            task = "Armed with the detailed content and precise guidelines provided, your mission now is to synthesize the final, unified output. This crucial phase is where your skills truly shine, as you blend all project elements into a seamless whole. As you embark on this task, prioritize maintaining the integrity of the original project vision, ensuring every piece of content contributes meaningfully to the end goal. Remember, your meticulous effort to integrate, refine, and polish the project's components is essential for delivering an outcome that not only meets but exceeds expectations. Your role is fundamental in turning the project's blueprint into a standout, ready-to-launch masterpiece."
+
+    with st.spinner("Reviewing the final output..."):
+            reviewer = TaskReviewer()
+            review_result = reviewer.review_task(final_output, task, st.session_state['temperature'])
+            satisfied = check_if_satisfied(review_result)
+
+            while not satisfied:
+                with st.spinner("Rewriting the final output.."):
+                    final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
+
+            else:
+                write_to_file("final_output.txt", final_output)
 
     if download_on and final_output:
         st.balloons()
@@ -399,114 +638,262 @@ def split_history_into_chunks(max_chunk_size=2000, overlap_size=400):
 
     return st.session_state['chunks']
 
-def execute_and_review_task(task, task_list):
-    st.session_state['current_output'] = ""
+def execute_and_review_task(task, task_list, executing, reviewing):
     satisfied = False
-    # sidebar current task
-    placeholder_cur_task = st.empty()
-    placeholder_cur_task = st.sidebar.expander("## Current Task: ", expanded=True)
 
-    # sidebar completed tasks
-    placeholder_comp_tasks = st.empty()
-    placeholder_comp_tasks = st.sidebar.expander("## Completed tasks: ", expanded=True)
+    execution_placeholder = executing.empty()
+    review_placeholder = reviewing.empty()
 
-    with placeholder_cur_task:
-        st.write(f"{task.description}")
+    st.session_state['current_output'] = ""
+    st.session_state['current_task'] = task.description
 
-    if st.session_state['completed_tasks']:
-        with placeholder_comp_tasks:
-            for completed_task in st.session_state['completed_tasks']:
-                st.write(f"{completed_task}")
-    
+    if not satisfied:
+        with executing:
+            execution_placeholder.header("Task Execution")
+            with execution_placeholder.expander(f"Task Execution:",expanded=True):
+                with st.spinner("Executing task..."):
+                    executor = TaskExecutor()
+                    execution_result = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
+                    st.session_state['current_output'] = execution_result
+
+        with reviewing:
+            review_placeholder.header("Reviewing")
+            with review_placeholder.expander(f"Reviewing output", expanded=True):
+                with st.spinner("Reviewing Agent output..."):
+                    reviewer = TaskReviewer()
+                    review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
+                    satisfied = check_if_satisfied(review_result)
+
     while not satisfied:
-        with st.expander(f"## Current Task: {task.description}", expanded=True):
-            with st.spinner("Executing task..."):
-                executor = TaskExecutor()
-                execution_result = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
+        with execution_placeholder.container(border=True):
+            with st.spinner(f"Adjusting Task Based on Feedback"):
+                feedback = review_result
+                improver = TaskImprover()
+                execution_result = st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
                 st.session_state['current_output'] = execution_result
 
-            with st.spinner("Reviewing Agent output..."):
+        with review_placeholder.container(border=True):
+            with st.spinner("Reviewing Agent adjustment..."):
                 reviewer = TaskReviewer()
                 review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
                 satisfied = check_if_satisfied(review_result)
+    else:
+        st.success("Task execution is satisfactory based on review.")
+        st.session_state['history'] += f"\n{st.session_state['current_output']}"
+        write_to_file("execution_output.txt", st.session_state['current_output'])
+        execution_placeholder.empty()
+        review_placeholder.empty()
 
-                if not satisfied:
-                    feedback = review_result
-                    with st.container():
-                        with st.spinner(f"Adjusting Task Based on Feedback: {task.description}"):
-                            improver = TaskImprover()
-                            st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
-                else:
-                    st.success("Task execution is satisfactory based on review.")
-                    st.session_state['history'] += f"\n{st.session_state['current_output']}"
-                    write_to_file("execution_output.txt", st.session_state['current_output'])
-                    st.session_state['completed_tasks'].append(task.description)
-                    with placeholder_comp_tasks:
-                        for completed_task in st.session_state['completed_tasks']:
-                            st.write(f"{completed_task}")
+    # Update the 'completed_tasks' list and clear 'current_task'
+    st.session_state['completed_tasks'].append(st.session_state['current_task'])
+    st.session_state['current_task'] = ""
+    currenttask = st.session_state['current_task']
+    return currenttask
 
-    return st.session_state['current_output']
+def execute_and_review_subtask(task, task_list, executing, reviewing):
+    satisfied = False
 
-def main():
+    execution_placeholder = executing.empty()
+    review_placeholder = reviewing.empty()
+
+    st.session_state['current_output'] = ""
+    st.session_state['current_task'] = task.description
+
+    if not satisfied:
+        with executing:
+            execution_placeholder.header("Task Execution")
+            with execution_placeholder.expander(f"Task Execution: {st.session_state['current_task']}",expanded=True):
+                with st.spinner("Executing task..."):
+                    executor = TaskExecutor()
+                    execution_result = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
+                    st.session_state['current_output'] = execution_result
+
+        with reviewing:
+            review_placeholder.header("Reviewing")
+            with review_placeholder.expander(f"Reviewing output", expanded=True):
+                with st.spinner("Reviewing Agent output..."):
+                    reviewer = TaskReviewer()
+                    review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
+                    satisfied = check_if_satisfied(review_result)
+
+    while not satisfied:
+        with execution_placeholder.container(border=True):
+            with st.spinner(f"Adjusting Task Based on Feedback for: {st.session_state['current_task']}"):
+                feedback = review_result
+                improver = TaskImprover()
+                execution_result = st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
+                st.session_state['current_output'] = execution_result
+
+        with review_placeholder.container(border=True):
+            with st.spinner("Reviewing Agent adjustment..."):
+                reviewer = TaskReviewer()
+                review_result = reviewer.review_task(st.session_state['current_output'], task, st.session_state['temperature'])
+                satisfied = check_if_satisfied(review_result)
+    else:
+        st.success("Task execution is satisfactory based on review.")
+        st.session_state['history'] += f"\n{st.session_state['current_output']}"
+        write_to_file("execution_output.txt", st.session_state['current_output'])
+        execution_placeholder.empty()
+        review_placeholder.empty()
+
+    # Update the 'completed_tasks' list and clear 'current_task'
+    st.session_state['completed_tasks'].append(st.session_state['current_task'])
+    st.session_state['current_task'] = ""
+    currenttask = st.session_state['current_task']
+    return currenttask
+
+def initialize_streamlit_ui():
     st.set_page_config(
         page_title="Local Devai",
         page_icon=":clipboard:",
         initial_sidebar_state="auto",
-        layout = "wide",
+        layout="wide",
         menu_items={
-            "About": (
-                "## Local Devai\n\n"
-                "Local Devai is an AI-powered task planner and executor designed to autonomously generate the goal that the user inputs."
-                "With its intelligent agents, Local devai shows the user the task planning process, "
-                "shows a step-by-step execution process, and has internal reviews to "
-                "ensure tasks are completed successfully.\n\n"
-                "Key Features:\n"
-                "- Generate task plans based on user input\n"
-                "- Execute tasks with intelligent agents\n"
-                "- Review task outputs from agents for accuracy and completeness\n\n"
-                "Local Devai simplifies complex workflows and empowers users to achieve their goals with a single input"
-                "effectively. It can be seamlessly integrated with local Language Model (LLM) models "
-                "such as LM Studio, LlamaCPP, or oLlama, enabling users to leverage the power of "
-                "advanced language models for task planning and execution. Explore its capabilities "
-                "and streamline your task management today!"
-            )
+            "About": """## Local Devai
+
+Local Devai is an AI-powered task planner and executor designed to autonomously generate the goal that the user inputs.
+With its intelligent agents, Local Devai shows the user the task planning process, shows a step-by-step execution process, and has internal reviews to ensure tasks are completed successfully.
+
+Key Features:
+- Generate task plans based on user input
+- Execute tasks with intelligent agents
+- Review task outputs from agents for accuracy and completeness
+
+Local Devai simplifies complex workflows and empowers users to achieve their goals with a single input effectively. It can be seamlessly integrated with local Language Model (LLM) models such as LM Studio, LlamaCPP, or oLlama, enabling users to leverage the power of advanced language models for task planning and execution. Explore its capabilities and streamline your task management today!"""
         }
     )
+
+def sidebar_setup():
     st.sidebar.header("Localdevai by Renjestoo.")
-    st.session_state.already_written = False
-    
-    if st.sidebar.button('Clear Session and Start Over'):
+    output = ""
+    task = ""
+
+    if st.sidebar.button('Clear Session and Start Over', key="Clear_session"):
         st.session_state.clear()
-        st.rerun()
-        
+        st.experimental_rerun()
+
+    download_on, secondary_tasks, action_amount2, user_input, plan_tasks = handle_adjustable_settings_and_input()
+    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
+
+def handle_adjustable_settings_and_input():
     with st.sidebar.expander("Adjustable Settings", expanded=False):
-        download_on = st.checkbox("Enable Download", False)
-        st.divider()
-        st.session_state['temperature'] = st.sidebar.slider("Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, help=f"Lower values make the Agents more deterministic, meaning that that the Agents will be less creative.\nHigher values mean that the Agents will be more creative, with the possibility that the output will have lots of hallucinations.")
+        download_on = st.checkbox("Enable Download", False, disabled=st.session_state.get('pressed_submit', False))
+        st.session_state['temperature'] = st.slider("Set Agent Temperature", 0.0, 1.0, 0.7, 0.1)
+        st.session_state['action_amount1'] = st.slider("How many tasks should the planner make?", 3, 15, 5, 1, key="Task Amount")
+        secondary_tasks = st.checkbox("Secondary tasks", False, key="secondary_task_plan")
+
+        action_amount2 = None
+        if secondary_tasks:
+            action_amount2 = st.session_state['action_amount2'] = st.slider("How many secondary tasks should the planner make?", 2, 5, 3, 1, key="Secondary Task Amount")
 
     with st.sidebar.expander("Input", expanded=True):
-        user_input = st.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible")
-        st.divider()
+        user_input = st.text_area("# Enter your goal:", placeholder="Tell the AI what it should make (Be as descriptive as possible)")
         plan_tasks = st.button("Plan Tasks")
+        st.session_state['pressed_submit'] = plan_tasks
 
-    if plan_tasks:
-        with st.spinner("Generating task plan..."):
-            with st.expander(f"Task Planner"):
-                st.session_state['user_input'] = user_input
-                task_planner = TaskPlanner(st.session_state['user_input'], st.session_state['temperature'])
-                task_list_json = task_planner.generate_plan(st.session_state['temperature'])
+    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
 
-        task_list = TaskList()
-        st.session_state["task_list"] = []
+def plan_primary_tasks(user_input, temperature):
+    st.header("Planning: ")
+    with st.spinner("Generating task plan..."):
+        with st.expander("Main Planning", expanded=False):
+            task_planner = TaskPlanner(user_input, temperature)
+            plan_output = task_planner.generate_plan(temperature)
+            with st.spinner("Creating JSON Taskplan, please have patience..."):
+                json_formatter = JsonFormatter(plan_output, temperature)
+                task_list_json = json_formatter.reformat(temperature)
+    return task_list_json
 
-        
+def plan_secondary_tasks(task_list_json, temperature, action_amount2):
+    for task_info in task_list_json:
+        with st.spinner(f"Generating secondary task plan for {task_info['ID']} with objective: {task_info['Description']}..."):
+            with st.expander(f"Secondary Planning for task: {task_info['ID']}", expanded=False):
+                second_task_planner = SecondTaskPlanner(task_info['Description'], temperature, action_amount2)
+                secondary_plan_output = second_task_planner.generate_plan(temperature, action_amount2)
+                with st.spinner("Creating JSON Taskplan, please have patience..."):
+                    json_formatter = JsonFormatter(secondary_plan_output, temperature)
+                    formatted_secondary_tasks = json_formatter.reformat(temperature)
+                task_info['subtasks'] = formatted_secondary_tasks
+    return task_list_json
+
+def visualize_task_planning(task_list_json, planning):
+    for task_info in task_list_json:
+        with st.sidebar.status("Current Tasks"):
+            if 'subtasks' in task_info and task_info['subtasks']:
+                st.header(f"Main Task: {task_info['ID']} - {task_info['Description']}")
+                for subtask_info in task_info['subtasks']:
+                    st.text(f"Subtask: {subtask_info['ID']} - {subtask_info['Description']}")
+            else:
+                st.text(f"Task: {task_info['ID']} - {task_info['Description']}")
+
+def execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning):
+    if secondary_tasks:
+        output = execute_and_review_subtasks(task_list_json, executing, reviewing, planning)
+    else:
+        output = execute_and_review_tasks(task_list_json, executing, reviewing)
+    return output
+
+def execute_and_review_tasks(task_list_json, executing, reviewing):
+    task_list = TaskList()
+    placeholder_currenttask = st.empty()
+    placeholder_currenttask = st.sidebar.container(border=True)
+
+    with placeholder_currenttask:
         for index, task_info in enumerate(task_list_json):
+            st.write(f"Executing Task: {task_info['ID']}")
+            st.write(f"{task_info['Description']}")
+            st.write(f"")
             task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
             task_list.add_task(task)
             st.session_state["task_list"].append({"description": task.description, "completed": False})
+            output = execute_and_review_task(task, task_list, executing, reviewing)
+            st.session_state['output'] = output
+            placeholder_currenttask = st.empty()
+            placeholder_currenttask = st.sidebar.container(border=True)
+    st.session_state['all_tasks_done'] = True
 
-            output = execute_and_review_task(task, task_list)
-                
+def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
+    task_list2 = TaskList()
+
+    placeholder_currenttask = st.empty()
+    placeholder_currenttask = st.sidebar.container(border=True)
+
+    with placeholder_currenttask:
+        for main_task_index, main_task_info in enumerate(task_list_json):
+            planning.write(f"Processing Main Task: {main_task_info['ID']} - {main_task_info['Description']}")
+            if 'subtasks' in main_task_info and main_task_info['subtasks']:
+                for subtask_index, subtask_info in enumerate(main_task_info['subtasks']):
+                    st.write(f"Executing Subtask: {subtask_info['ID']}")
+                    st.write(f"{subtask_info['Description']}")
+                    st.write(f"")
+                    subtask = Task(subtask_info['ID'], subtask_info['Description'], subtask_info['Type'], subtask_info['Role'])
+                    task_list2.add_task(subtask)
+                    st.session_state["task_list2"].append({"description": subtask.description, "completed": False})
+                    output = execute_and_review_subtask(subtask, task_list2, executing, reviewing)
+                    st.session_state['output'] = output
+                    placeholder_currenttask = st.empty()
+                    placeholder_currenttask = st.sidebar.container(border=True) 
+    st.session_state['all_tasks_done'] = True
+
+def main():
+    initialize_streamlit_ui()
+    download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
+    planning, executing, reviewing = st.columns(3)
+
+    if plan_tasks:
+        with planning:
+            with st.container(border=True):
+                task_list_json = plan_primary_tasks(user_input, st.session_state['temperature'])
+                if secondary_tasks:
+                    task_list_json = plan_secondary_tasks(task_list_json, st.session_state['temperature'], action_amount2)
+                st.write(task_list_json)
+
+        #visualize_task_planning(task_list_json, planning)
+        output = execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning)
+
+
+    if st.session_state['all_tasks_done']:
+        st.balloons()
         handle_finalization_and_downloads(download_on, output)
 
 if __name__ == "__main__":
