@@ -771,8 +771,7 @@ def execute_and_review_task(task, task_list, executing, reviewing):
             with execution_placeholder.expander(f"Task Execution:",expanded=True):
                 with st.spinner("Executing task..."):
                     executor = TaskExecutor()
-                    execution_result = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
-                    st.session_state['current_output'] = execution_result
+                    st.session_state['current_output'] = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
 
         with reviewing:
             review_placeholder.header("Reviewing")
@@ -788,7 +787,6 @@ def execute_and_review_task(task, task_list, executing, reviewing):
                 feedback = review_result
                 improver = TaskImprover()
                 execution_result = st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
-                st.session_state['current_output'] = execution_result
 
         with review_placeholder.container(border=True):
             with st.spinner("Reviewing Agent adjustment..."):
@@ -804,9 +802,9 @@ def execute_and_review_task(task, task_list, executing, reviewing):
 
     # Update the 'completed_tasks' list and clear 'current_task'
     st.session_state['completed_tasks'].append(st.session_state['current_task'])
+    output = st.session_state['current_output']
     st.session_state['current_task'] = ""
-    currenttask = st.session_state['current_task']
-    return currenttask
+    return output
 
 def execute_and_review_subtask(task, task_list, executing, reviewing):
     satisfied = False
@@ -823,8 +821,7 @@ def execute_and_review_subtask(task, task_list, executing, reviewing):
             with execution_placeholder.expander(f"Task Execution: {st.session_state['current_task']}",expanded=True):
                 with st.spinner("Executing task..."):
                     executor = TaskExecutor()
-                    execution_result = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
-                    st.session_state['current_output'] = execution_result
+                    st.session_state['current_output'] = executor.execute_task(task, task_list, st.session_state['history'], st.session_state['temperature'])
 
         with reviewing:
             review_placeholder.header("Reviewing")
@@ -839,8 +836,7 @@ def execute_and_review_subtask(task, task_list, executing, reviewing):
             with st.spinner(f"Adjusting Task Based on Feedback for: {st.session_state['current_task']}"):
                 feedback = review_result
                 improver = TaskImprover()
-                execution_result = st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
-                st.session_state['current_output'] = execution_result
+                st.session_state['current_output'] = improver.execute_task(task, task_list, st.session_state['history'], feedback, st.session_state['current_output'], st.session_state['temperature'])
 
         with review_placeholder.container(border=True):
             with st.spinner("Reviewing Agent adjustment..."):
@@ -857,8 +853,8 @@ def execute_and_review_subtask(task, task_list, executing, reviewing):
     # Update the 'completed_tasks' list and clear 'current_task'
     st.session_state['completed_tasks'].append(st.session_state['current_task'])
     st.session_state['current_task'] = ""
-    currenttask = st.session_state['current_task']
-    return currenttask
+    output = st.session_state['current_output']
+    return output
 
 def initialize_streamlit_ui():
     st.set_page_config(
@@ -973,7 +969,7 @@ def execute_and_review_tasks(task_list_json, executing, reviewing):
             st.session_state['output'] = output
             placeholder_currenttask = st.empty()
             placeholder_currenttask = st.sidebar.container(border=True)
-    st.session_state['all_tasks_done'] = True
+        st.session_state['all_tasks_done'] = True
 
 def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
     task_list2 = TaskList()
@@ -1016,7 +1012,7 @@ def main():
 
 
     if st.session_state['all_tasks_done'] == True:
-        handle_finalization_and_downloads(download_on, st.session_state['output'])
+        handle_finalization_and_downloads(download_on, output)
         st.balloons()
     else:
         pass
