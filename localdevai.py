@@ -1001,21 +1001,26 @@ def main():
     download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
     planning, executing, reviewing = st.columns(3)
 
-    if plan_tasks:
-        with planning:
-            with st.container(border=True):
-                task_list_json = plan_primary_tasks(user_input, st.session_state['temperature'])
-                if secondary_tasks:
-                    task_list_json = plan_secondary_tasks(task_list_json, st.session_state['temperature'], action_amount2)
-                st.write(task_list_json)
+    Planning, Execution, Finalization = st.tabs(tabs=["Planning", "Execution", "Finalization"])
 
+    with Planning:
+        if plan_tasks:
+            with planning:
+                with st.container(border=True):
+                    task_list_json = plan_primary_tasks(user_input, st.session_state['temperature'])
+                    if secondary_tasks:
+                        task_list_json = plan_secondary_tasks(task_list_json, st.session_state['temperature'], action_amount2)
+                    st.write(task_list_json)
+
+    with Execution:
         #visualize_task_planning(task_list_json, planning)
         output = execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning)
 
 
-    if st.session_state['all_tasks_done']:
-        st.balloons()
-        handle_finalization_and_downloads(download_on, st.session_state['output'])
+    with Finalization:
+        if st.session_state['all_tasks_done']:
+            st.balloons()
+            handle_finalization_and_downloads(download_on, st.session_state['output'])
 
 if __name__ == "__main__":
     main()
