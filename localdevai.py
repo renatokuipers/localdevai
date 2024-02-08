@@ -57,6 +57,8 @@ if 'task_list' not in st.session_state:
     st.session_state["task_list"] = []
 if 'coding_task' not in st.session_state:
     st.session_state['coding_task'] = False
+if 'task_list_json' not in st.session_state:
+    st.session_state['task_list_json'] = []
 
 ### Classes ###
 class Task:
@@ -930,9 +932,9 @@ def plan_secondary_tasks(task_list_json, temperature, action_amount2):
         with st.spinner(f"Generating secondary task plan for {task_info['ID']} with objective: {task_info['Description']}..."):
             with st.expander(f"Secondary Planning for task: {task_info['ID']}", expanded=False):
                 second_task_planner = SecondTaskPlanner(task_info['Description'], temperature, action_amount2)
-                secondary_plan_output = second_task_planner.generate_plan(temperature, action_amount2)
+                st.session_state['task_list_json'] = second_task_planner.generate_plan(temperature, action_amount2)
                 with st.spinner("Creating JSON Taskplan, please have patience..."):
-                    json_formatter = JsonFormatter(secondary_plan_output, temperature)
+                    json_formatter = JsonFormatter(st.session_state['task_list_json'], temperature)
                     formatted_secondary_tasks = json_formatter.reformat(temperature)
                 task_info['subtasks'] = formatted_secondary_tasks
     return task_list_json
@@ -1008,14 +1010,14 @@ def main():
         if plan_tasks:
             with planning:
                 with st.container(border=True):
-                    task_list_json = plan_primary_tasks(user_input, st.session_state['temperature'])
+                    st.session_state['task_list_json'] = plan_primary_tasks(user_input, st.session_state['temperature'])
                     if secondary_tasks:
-                        task_list_json = plan_secondary_tasks(task_list_json, st.session_state['temperature'], action_amount2)
-                    st.write(task_list_json)
+                        st.session_state['task_list_json'] = plan_secondary_tasks(st.session_state['task_list_json'], st.session_state['temperature'], action_amount2)
+                    st.write(st.session_state['task_list_json'])
 
     with Execution:
         #visualize_task_planning(task_list_json, planning)
-        output = execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning)
+        execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
 
 
     with Finalization:
