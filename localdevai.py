@@ -222,7 +222,7 @@ class TaskExecutor:
             return stored_output
         else:
             print_section_header(f"Task ID: {task.task_id}\nRole: {task.role}\nCurrent task: {task.description}")
-            if st.session_state['coding_task'] == True:
+            if st.session_state['coding_task'] == False:
                 task_agent_message = generate_task_agent_system_message(
                     str(task_list), history, task.role, task.description
                 )
@@ -260,7 +260,7 @@ class TaskImprover:
 
     def execute_task(self, task, task_list, history, feedback, last_output, temperature):
         print_section_header(f"Role: {task.role}\nImproving current task: {task.description}")
-        if st.session_state['coding_task'] == True:
+        if st.session_state['coding_task'] == False:
             task_agent_message = generate_task_improver_agent_system_message(
                 str(task_list), history, task.role, task.description, feedback, last_output
             )
@@ -282,7 +282,7 @@ class TaskReviewer:
 
     def review_task(self, output, task, temperature):
         print_section_header(f"Reviewing output...")
-        if st.session_state['coding_task'] == True:
+        if st.session_state['coding_task'] == False:
             reviewer_message = generate_reviewer_system_message(st.session_state['user_input'], output, task)
         else:
             reviewer_message = generate_coding_reviewer_feedback(st.session_state['user_input'], output, task)
@@ -890,7 +890,7 @@ def sidebar_setup():
     return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
 
 def handle_adjustable_settings_and_input():
-    with st.sidebar.expander("Adjustable Settings", expanded=True):
+    with st.sidebar.expander("Adjustable Settings", expanded=False):
         download_on = st.checkbox(label="Enable Download", value=False, disabled=False, key="download_on", help="When enabled, in the end, you will have the option to download the full log of the agents and the final output.")
         st.session_state['temperature'] = st.slider(label="Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, key="Temperature", help="A lower value makes the program more deterministic, while a higher value will make it more creative")
         st.session_state['action_amount1'] = st.slider(label="How many tasks should the planner make?", min_value=3, max_value=15, value=5, step=1, key="Task Amount", help="This determines how many tasks there will be in the taskplan.")
