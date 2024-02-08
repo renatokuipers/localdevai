@@ -1008,11 +1008,11 @@ def main():
                 st.write(st.session_state['task_list_json'])
 
         #visualize_task_planning(task_list_json, planning)
-        output = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
+        st.session_state['output'] = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
 
 
     if st.session_state['all_tasks_done'] == True:
-        handle_finalization_and_downloads(download_on, output)
+        handle_finalization_and_downloads(download_on, st.session_state['output'])
         st.balloons()
     else:
         pass
