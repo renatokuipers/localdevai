@@ -894,7 +894,7 @@ def main():
 
     if st.session_state['all_tasks_done']:
         st.balloons()
-        handle_finalization_and_downloads(download_on, output)
+        handle_finalization_and_downloads(download_on, st.session_state['output'])
 
 if __name__ == "__main__":
     main()
