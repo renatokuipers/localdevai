@@ -1002,7 +1002,7 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
 
 def main():
     initialize_streamlit_ui()
-    download_on, secondary_tasks, action_amount2, user_input, plan_tasks, coding_enabled = sidebar_setup()
+    download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
     planning, executing, reviewing = st.columns(3)
 
     if plan_tasks:
