@@ -916,7 +916,7 @@ def handle_adjustable_settings_and_input():
         plan_tasks = st.button("Plan Tasks")
         st.session_state['pressed_submit'] = plan_tasks
 
-    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks, coding_enabled
+    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
 
 def plan_primary_tasks(user_input, temperature):
     st.header("Planning: ")
