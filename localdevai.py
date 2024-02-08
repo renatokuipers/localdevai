@@ -890,7 +890,7 @@ def sidebar_setup():
     return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
 
 def handle_adjustable_settings_and_input():
-    with st.sidebar.expander("Adjustable Settings", expanded=False):
+    with st.sidebar.expander("Adjustable Settings", expanded=True):
         download_on = st.checkbox(label="Enable Download", value=False, disabled=False, key="download_on", help="When enabled, in the end, you will have the option to download the full log of the agents and the final output.")
         st.session_state['temperature'] = st.slider(label="Set Agent Temperature", min_value=0.0, max_value=1.0, value=0.7, step=0.1, key="Temperature", help="A lower value makes the program more deterministic, while a higher value will make it more creative")
         st.session_state['action_amount1'] = st.slider(label="How many tasks should the planner make?", min_value=3, max_value=15, value=5, step=1, key="Task Amount", help="This determines how many tasks there will be in the taskplan.")
