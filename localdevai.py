@@ -706,7 +706,7 @@ def check_if_satisfied(review_result):
     adjustment_pattern = r"(###\s*)?Needs\s*Adjustment(\s*###)?"
     return not re.search(adjustment_pattern, review_result, re.IGNORECASE)
 
-def handle_finalization_and_downloads(download_on, execution_result, Finalization):
+def handle_finalization_and_downloads(execution_result, Finalization):
     with Finalization:
         with st.spinner("Creating the final output..."):
             with st.expander("Final Output"):
@@ -978,7 +978,8 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing, planning, 
 
 def main():
     initialize_streamlit_ui()
-    download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
+    #download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
+    secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
     planning, executing, reviewing = st.columns(3)
 
     Planning, Execution, Finalization = st.tabs(tabs=["Planning", "Execution","Finalization"])
@@ -995,7 +996,8 @@ def main():
             st.session_state['output'] = execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning, Execution, Finalization)
 
 
-        handle_finalization_and_downloads(download_on, st.session_state['output'], Finalization)
+        #handle_finalization_and_downloads(download_on, st.session_state['output'], Finalization)
+        handle_finalization_and_downloads(st.session_state['output'], Finalization)
         st.balloons()
 
 if __name__ == "__main__":
