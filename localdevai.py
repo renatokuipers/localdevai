@@ -692,7 +692,7 @@ def write_to_file(file_path, text):
     else:
         with open(file_path, 'a', encoding='utf-8') as file:
             file.write(text + "\n")
-            
+
 def print_section_header(title):
     """Prints a section header."""
     print(f"\n{'#' * 60}")
@@ -716,12 +716,8 @@ def handle_finalization_and_downloads(download_on, execution_result):
             review_result = reviewer.review_task(final_output, task, st.session_state['temperature'])
             satisfied = check_if_satisfied(review_result)
 
-            while not satisfied:
-                with st.spinner("Rewriting the final output.."):
-                    final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
-
-            else:
-                write_to_file("final_output.txt", final_output)
+            final_output = finalizer.compile_final_output("execution_output.txt", st.session_state['temperature'])
+            write_to_file("final_output.txt", final_output)
 
     if download_on and final_output:
         st.balloons()
