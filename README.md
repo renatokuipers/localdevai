@@ -1,69 +1,75 @@
-# Local Devai: Task Planning and Execution System
+# Local Devai: Advanced Task Planner and Executor
 
-Local Devai is an AI-powered application designed to streamline the process of task planning, execution, and review. Built with Streamlit and powered by OpenAI's GPT models, Local Devai enables users to input their goals and automatically generates a detailed task plan, executes these tasks with intelligent agents, and reviews the outputs to ensure quality and alignment with the initial objectives.
+Local Devai revolutionizes task management by integrating AI-driven planning, execution, and review into a single, streamlined application. Built on Streamlit and leveraging OpenAI's cutting-edge language models, this application transforms user-defined goals into actionable plans, executes these plans through intelligent automation, and ensures output quality with a sophisticated review system.
 
-## Features
+## Key Features
 
-- **Automated Task Planning**: Generate detailed task plans based on user input, including primary and optional secondary tasks for comprehensive coverage.
-- **Intelligent Task Execution**: Utilize intelligent agents to autonomously execute planned tasks, supporting both coding and general project tasks.
-- **Quality Review Process**: Includes an automated review system to evaluate task outputs, ensuring they meet predefined quality standards and align with user goals.
-- **Iterative Improvement**: Facilitates feedback loops, allowing for the iterative refinement of task outputs based on review outcomes.
-- **Flexible Workflow**: Supports a range of tasks from coding projects to general planning and content creation, with customizable settings for task complexity and depth.
+- **Dynamic Task Planning**: Automates the breakdown of user-inputted goals into detailed, actionable tasks and optional sub-tasks, laying out a clear roadmap for project completion.
+- **Intelligent Execution Agents**: Employs AI agents to autonomously execute tasks, adaptable for a wide range of projects including coding, content creation, and more.
+- **Automated Quality Reviews**: Incorporates an AI-based review mechanism to assess task outputs, guaranteeing they meet set quality standards and perfectly align with the initial objectives.
+- **Iterative Output Refinement**: Supports feedback-driven output refinement, allowing for continuous improvement based on comprehensive review feedback.
+- **User-Centric Design**: Offers a simple, intuitive Streamlit-based UI that guides users through each project phase, from planning through finalization.
+
+## Repository Contents
+
+- `.env` - Template for environment variables, customize to configure application settings.
+- `README.md` - This file, containing documentation and setup instructions.
+- `execution_output.txt` - Sample file showing the output of task executions.
+- `final_output.txt` - Sample file demonstrating the final, compiled output after all tasks and reviews.
+- `localdevai.py` - The main Python script powering the Local Devai application.
+- `requirements.txt` - A list of Python packages required to run the application.
 
 ## Getting Started
 
 ### Prerequisites
 
-Before you begin, ensure you have the following installed:
-- Python 3.9 or newer
+- Python 3.9+
+- An internet connection for API calls to OpenAI (for local development, a model running locally can be used as well)
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository to your local machine:
 ```bash
 git clone https://github.com/renatokuipers/localdevai.git
 ```
 
-2. Navigate to the project directory:
+2. Navigate to the Local Devai directory:
 ```bash
 cd localdevai
 ```
 
-3. Install the required Python packages:
+3. Install the necessary Python packages from `requirements.txt`:
 ```bash
 pip install -r requirements.txt
 ```
 
-### Running the Application
+### Running Local Devai
 
-Start the application by running:
+Launch the application with Streamlit:
 ```bash
 streamlit run localdevai.py
 ```
-Navigate to the displayed URL in your web browser to interact with the application.
+Access the application via your web browser at the URL provided by Streamlit.
 
-## Usage
+## How to Use
 
-Upon launching Local Devai, you will be greeted with a simple UI where you can input your project goal. The system then guides you through the following steps:
-
-1. **Planning Phase**: Enter your goal and specify any additional settings related to the task complexity and execution.
-2. **Task Execution**: The system autonomously generates and executes tasks based on the planning phase, with options to review and adjust tasks as needed.
-3. **Finalization**: After all tasks are completed and reviewed, the final output is compiled and presented, ready for download or further action.
+1. **Start Local Devai**: Open the application in your browser and input your project goal in the provided text area.
+2. **Task Planning**: Adjust the settings for your project's complexity and scope as needed. The system will guide you through planning, executing, and reviewing your tasks.
+3. **Execution and Review**: Follow the application's prompts to review the AI-generated tasks and their execution outputs.
+4. **Finalization**: Once all tasks are completed and reviewed, Local Devai compiles the final outputs for your project, ready for review and download.
 
 ## Contributing
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-
-Don't forget to give the project a star! Thanks again!
+Your contributions are welcome! If you have suggestions for improving Local Devai, please fork the repository, make your changes, and submit a pull request. You can also open issues with the tag "enhancement" for feature requests or suggestions.
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Local Devai is open-sourced under the MIT License. See the [LICENSE](https://github.com/renatokuipers/localdevai/blob/main/LICENSE) file in the repository for more information.
 
 ## Acknowledgments
 
-- OpenAI for providing the GPT models.
-- Streamlit for the interactive web application framework.
-- SQLite for the database management system.
+- Thanks to OpenAI for the GPT models that power the intelligent aspects of Local Devai.
+- Streamlit, for the fantastic framework that makes interactive web applications straightforward to build.
+- The SQLite team, for the reliable database management system used in this project.
+
+Start your journey with Local Devai today and transform how you approach task management and execution in your projects!
