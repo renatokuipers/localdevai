@@ -620,11 +620,11 @@ def generate_coding_reviewer_feedback(user_input, agent_output, task_description
 
             Feedback Guidelines:
             - Structure your feedback to highlight whether the agent's coding output successfully meets the user's goal and task requirements. Start your feedback with:
-                - '### Needs Adjustment ###' to indicate areas where the code falls short of the task's demands or user's expectations. Provide specific insights into what adjustments are needed.
+                - '### Needs Adjustment ###' to indicate areas where the code falls short of the task's demands or user's expectations. Provide specific insights into what adjustments are needed. The code should NOT have placeholders, TODO's, Snippets or stubs.
                 - '### Satisfied ###' if the code effectively accomplishes the user's goal and the task's specifications.
             - Focus your critique on:
                 1. Accuracy: Does the code directly and effectively address the user's goal and the task's specifics?
-                2. Completeness: Is the code comprehensive, including all necessary components to fulfill the task?
+                2. Completeness: Is the code comprehensive, including all necessary components to fulfill the task? (The code should NOT have placeholders, TODO's, Snippets or stubs.)
                 3. Relevance: Does every part of the code contribute towards achieving the user's stated objective?
                 4. Quality: Evaluate the code for logical coherence, absence of errors, and overall integrity to ensure high standards.
 
