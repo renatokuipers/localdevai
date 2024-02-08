@@ -1014,7 +1014,7 @@ def main():
                 st.write(st.session_state['task_list_json'])
 
     with Execution:
-        executing, reviewing = st.columns(1,1)
+        executing, reviewing = st.columns(2)
         #visualize_task_planning(task_list_json, planning)
         execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing)
 
