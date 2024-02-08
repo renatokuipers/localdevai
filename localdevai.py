@@ -440,26 +440,26 @@ def generate_task_improver_agent_system_message(tasklist, history, task_role, ta
     return (f"""
             Your role is crucial in refining the project's output to align more closely with the overall objectives. Use the information and feedback provided to enhance your last output. Here is the context and guidance for your task:
 
-            1. Full Tasklist: Understand where your task fits within the broader scope of the project.
+            1. Full Tasklist (For understanding where your task fits within the broader scope of the project.)
             ```
             {tasklist}
             ```
 
-            2. Previous Actions: Review the progression towards the overall goal to inform your improvements.
+            2. Previous Actions (For reviewing the progression towards the overall goal to inform your improvements.)
             ```
             {history}
             ```
 
-            3. Your Last Output: Reflect on your previous submission to understand the starting point for improvements.
+            3. Your Last Output (For reflecting on your previous submission to understand the starting point for improvements.)
             ```
             {last_output}
             ```
 
-            4. Your Current Role: '{task_role}'. This role defines your specific focus on improving the existing output.
+            4. Your Current Role: '{task_role}'. (This role defines your specific focus on improving the existing output.)
 
-            5. Your Current Task: '{task_description}'. This describes what aspect of your last output needs refinement or expansion.
+            5. Your Current Task: '{task_description}'. (This describes what aspect of your last output needs refinement or expansion.)
 
-            6. Feedback: Utilize this targeted feedback to guide your improvements.
+            6. Feedback (Utilize this targeted feedback to guide your improvements.)
             ```
             {feedback}
             ```
