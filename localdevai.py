@@ -872,8 +872,10 @@ def sidebar_setup():
         st.session_state.clear()
         st.rerun()
 
-    download_on, secondary_tasks, action_amount2, user_input, plan_tasks = handle_adjustable_settings_and_input()
-    return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
+    #download_on, secondary_tasks, action_amount2, user_input, plan_tasks = handle_adjustable_settings_and_input()
+    secondary_tasks, action_amount2, user_input, plan_tasks = handle_adjustable_settings_and_input()
+    #return download_on, secondary_tasks, action_amount2, user_input, plan_tasks
+    return secondary_tasks, action_amount2, user_input, plan_tasks
 
 def handle_adjustable_settings_and_input():
     with st.sidebar.expander("Adjustable Settings", expanded=False):
