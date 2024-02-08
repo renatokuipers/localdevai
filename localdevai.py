@@ -19,6 +19,7 @@ OPENAI_API_KEY = "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"
 
 ### Initializations ###
 chat_client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
+openai_chat_client = OpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
 
 ### Initialize or update session state variables ###
 if 'history' not in st.session_state:
@@ -290,7 +291,8 @@ class TaskReviewer:
             {"role": "system", "content": reviewer_message},
             {"role": "user", "content": "Please proceed to provide your feedback based on the guidelines outlined mentioned before. It's crucial to strictly follow these rules to ensure the feedback is constructive and aligns with the evaluation criteria. Your insights are valuable to us, so please be thorough and precise in your assessment."}
         ]
-        response = generate_response(history, temperature)
+        #response = generate_response(history, temperature)
+        response = generate_openai_response(history, temperature)
         return response
 
 class Finalizer:
@@ -342,6 +344,25 @@ def generate_response(messages, temperature):
     
     stream = chat_client.chat.completions.create(
         model=MODEL_LOCAL,
+        messages=messages,
+        stream=True,
+        temperature=temperature,
+    )
+    response = ""
+    response_container = st.empty()
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            print(chunk.choices[0].delta.content, end="", flush=True)
+            response += chunk.choices[0].delta.content
+            response_container.write(response)
+    st.write("\n")
+    return response
+
+def generate_openai_response(messages, temperature):
+    """Generates a response using OpenAI's API."""
+    
+    stream = openai_chat_client.chat.completions.create(
+        model=OPENAI_MODEL_LOCAL,
         messages=messages,
         stream=True,
         temperature=temperature,
