@@ -949,9 +949,9 @@ def visualize_task_planning(task_list_json, planning):
             else:
                 st.text(f"Task: {task_info['ID']} - {task_info['Description']}")
 
-def execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing, planning):
+def execute_tasks_based_on_type(task_list_json, secondary_tasks, executing, reviewing):
     if secondary_tasks:
-        output = execute_and_review_subtasks(task_list_json, executing, reviewing, planning)
+        output = execute_and_review_subtasks(task_list_json, executing, reviewing)
     else:
         output = execute_and_review_tasks(task_list_json, executing, reviewing)
     return output
@@ -975,7 +975,7 @@ def execute_and_review_tasks(task_list_json, executing, reviewing):
             placeholder_currenttask = st.sidebar.container(border=True)
     st.session_state['all_tasks_done'] = True
 
-def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
+def execute_and_review_subtasks(task_list_json, executing, reviewing):
     task_list2 = TaskList()
 
     placeholder_currenttask = st.empty()
@@ -983,7 +983,6 @@ def execute_and_review_subtasks(task_list_json, executing, reviewing, planning):
 
     with placeholder_currenttask:
         for main_task_index, main_task_info in enumerate(task_list_json):
-            planning.write(f"Processing Main Task: {main_task_info['ID']} - {main_task_info['Description']}")
             if 'subtasks' in main_task_info and main_task_info['subtasks']:
                 for subtask_index, subtask_info in enumerate(main_task_info['subtasks']):
                     st.write(f"Executing Subtask: {subtask_info['ID']}")
@@ -1004,20 +1003,20 @@ def main():
 
     Planning, Execution, Finalization = st.tabs(tabs=["Planning", "Execution", "Finalization"])
 
-    planning, executing, reviewing = st.columns(3)
+    #planning, executing, reviewing = st.columns(3)
 
     with Planning:
         if plan_tasks:
-            with planning:
-                with st.container(border=True):
-                    st.session_state['task_list_json'] = plan_primary_tasks(user_input, st.session_state['temperature'])
-                    if secondary_tasks:
-                        st.session_state['task_list_json'] = plan_secondary_tasks(st.session_state['task_list_json'], st.session_state['temperature'], action_amount2)
-                    st.write(st.session_state['task_list_json'])
+            with st.container(border=True):
+                st.session_state['task_list_json'] = plan_primary_tasks(user_input, st.session_state['temperature'])
+                if secondary_tasks:
+                    st.session_state['task_list_json'] = plan_secondary_tasks(st.session_state['task_list_json'], st.session_state['temperature'], action_amount2)
+                st.write(st.session_state['task_list_json'])
 
     with Execution:
+        executing, reviewing = st.columns(1,1)
         #visualize_task_planning(task_list_json, planning)
-        execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing, planning)
+        execute_tasks_based_on_type(st.session_state['task_list_json'], secondary_tasks, executing, reviewing)
 
 
     with Finalization:
