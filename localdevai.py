@@ -998,8 +998,9 @@ def main():
     download_on, secondary_tasks, action_amount2, user_input, plan_tasks = sidebar_setup()
     planning, executing, reviewing = st.columns(3)
 
+    Planning = st.tabs(tabs=["Planning"])
     if plan_tasks:
-        with planning:
+        with Planning:
             with st.container(border=True):
                 st.session_state['task_list_json'] = plan_primary_tasks(user_input, st.session_state['temperature'])
                 if secondary_tasks:
