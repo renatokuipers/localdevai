@@ -955,19 +955,18 @@ def execute_and_review_tasks(task_list_json, executing, reviewing, Execution, Fi
     placeholder_currenttask = st.empty()
     placeholder_currenttask = st.sidebar.container(border=True)
 
-    with placeholder_currenttask:
-        for index, task_info in enumerate(task_list_json):
-            st.write(f"Executing Task: {task_info['ID']}")
-            st.write(f"{task_info['Description']}")
-            st.write(f"")
-            task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
-            task_list.add_task(task)
-            st.session_state["task_list"].append({"description": task.description, "completed": False})
-            output = execute_and_review_task(task, task_list, executing, reviewing, Execution, Finalization)
-            st.session_state['output'] = output
-            placeholder_currenttask = st.empty()
-            placeholder_currenttask = st.sidebar.container(border=True)
-        st.session_state['all_tasks_done'] = True
+    for index, task_info in enumerate(task_list_json):
+        placeholder_currenttask.write(f"Executing Task: {task_info['ID']}")
+        placeholder_currenttask.write(f"{task_info['Description']}")
+        placeholder_currenttask.write(f"")
+        task = Task(task_info['ID'], task_info['Description'], task_info['Type'], task_info['Role'])
+        task_list.add_task(task)
+        st.session_state["task_list"].append({"description": task.description, "completed": False})
+        output = execute_and_review_task(task, task_list, executing, reviewing, Execution, Finalization)
+        st.session_state['output'] = output
+        placeholder_currenttask = st.empty()
+        placeholder_currenttask = st.sidebar.container(border=True)
+    st.session_state['all_tasks_done'] = True
 
 def execute_and_review_subtasks(task_list_json, executing, reviewing, planning, Execution, Finalization):
     task_list2 = TaskList()
