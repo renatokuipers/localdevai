@@ -220,7 +220,7 @@ class TaskExecutor:
             return stored_output
         else:
             print_section_header(f"Task ID: {task.task_id}\nRole: {task.role}\nCurrent task: {task.description}")
-            if st.session_state['coding_enabled'] == True:
+            if st.session_state['coding_task'] == True:
                 task_agent_message = generate_task_agent_system_message(
                     str(task_list), history, task.role, task.description
                 )
@@ -258,7 +258,7 @@ class TaskImprover:
 
     def execute_task(self, task, task_list, history, feedback, last_output, temperature):
         print_section_header(f"Role: {task.role}\nImproving current task: {task.description}")
-        if st.session_state['coding_enabled'] == True:
+        if st.session_state['coding_task'] == True:
             task_agent_message = generate_task_improver_agent_system_message(
                 str(task_list), history, task.role, task.description, feedback, last_output
             )
@@ -280,7 +280,7 @@ class TaskReviewer:
 
     def review_task(self, output, task, temperature):
         print_section_header(f"Reviewing output...")
-        if st.session_state['coding_enabled'] == True:
+        if st.session_state['coding_task'] == True:
             reviewer_message = generate_reviewer_system_message(st.session_state['user_input'], output, task)
         else:
             reviewer_message = generate_coding_reviewer_feedback(st.session_state['user_input'], output, task)
