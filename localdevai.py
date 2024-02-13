@@ -13,9 +13,9 @@ API_KEY = "not-needed" # local models don't have an API key...
 BASE_URL = "http://82.170.246.151:1234/v1" # for external use..
 
 # OpenAI constants: (these cost money!!!)#
-OPENAI_BASE_URL = "https://api.openai.com/v1"
-OPENAI_MODEL_LOCAL = "gpt-4-0125-preview"
-OPENAI_API_KEY = "own_api_key"
+#OPENAI_BASE_URL = "https://api.openai.com/v1"
+#OPENAI_MODEL_LOCAL = "gpt-4-0125-preview"
+#OPENAI_API_KEY = "own_api_key"
 
 ### Initializations ###
 chat_client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
